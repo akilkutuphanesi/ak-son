@@ -1,0 +1,467 @@
+import React, { useState, useEffect } from 'react';
+import { MessageCircle, User, LogOut, Image as ImageIcon, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, ChevronUp, Briefcase, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Home } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+
+  // --- TEMEL STATE'LER ---
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  const [viewMode, setViewMode] = useState('feed'); // 'feed', 'my_questions', 'my_answers'
+  const [selectedDepartment, setSelectedDepartment] = useState("Tümü");
+  const [selectedQuestion, setSelectedQuestion] = useState(null); 
+
+  const [token, setToken] = useState("");
+  const [userProfile, setUserProfile] = useState(null);
+  const [displayName, setDisplayName] = useState("");
+
+  const [questions, setQuestions] = useState([]);
+  const [myAnswers, setMyAnswers] = useState([]); 
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [questionAnswers, setQuestionAnswers] = useState({});
+  const [newAnswer, setNewAnswer] = useState("");
+  const [isAnswerSubmitting, setIsAnswerSubmitting] = useState(false);
+
+  const departments = [
+    "Tümü", "Bilgisayar Mühendisliği", "Biyomedikal Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", 
+    "Denizcilik İşletmeleri Yönetimi", "Ekonomi", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", 
+    "Gastronomi ve Mutfak Sanatları", "Gemi İnşaatı ve Gemi Makineleri Mühendisliği", "Havacılık Elektrik ve Elektroniği", 
+    "Havacılık ve Uzay Mühendisliği", "Havacılık Yönetimi", "İç Mimarlık", "İnşaat Mühendisliği", "Lojistik Yönetimi"
+  ];
+
+  // --- SAYFA YÜKLENİNCE ---
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    const storedName = localStorage.getItem('custom_display_name');
+    if (!storedToken) { navigate('/login'); return; }
+    setToken(storedToken);
+    if (storedName) setDisplayName(storedName);
+    
+    const initData = async () => {
+        await fetchUserProfile(storedToken);
+        await fetchQuestions(storedToken);
+        await fetchMyAnswers(storedToken);
+        await fetchNotifications(storedToken);
+    };
+    initData();
+  }, []);
+
+  // --- API İŞLEMLERİ ---
+  const fetchUserProfile = async (authToken) => {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/auth/me', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setUserProfile(data);
+            if (!localStorage.getItem('custom_display_name')) setDisplayName(data.email.split('@')[0]);
+        }
+    } catch (error) { console.error(error); }
+  };
+
+  const fetchQuestions = async (authToken) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/questions/', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (response.status === 401) { handleLogout(); return; }
+      const data = await response.json();
+      if (Array.isArray(data)) setQuestions(data.reverse());
+    } catch (error) { console.error(error); } 
+    finally { setIsLoading(false); }
+  };
+
+  const fetchMyAnswers = async (authToken = token) => {
+      try {
+          const response = await fetch('http://127.0.0.1:8000/answers/me', {
+              headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const data = await response.json();
+          setMyAnswers(data.reverse());
+      } catch (error) { console.error(error); }
+  };
+
+  const fetchNotifications = async (authToken = token) => {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/notifications/', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await response.json();
+        setNotifications(data.reverse());
+        setUnreadCount(data.filter(n => !n.is_read).length);
+    } catch (error) { console.error(error); }
+  };
+
+  const handleCreateQuestion = async () => {
+    if (!newTitle.trim() || !newContent.trim()) { alert("Başlık ve içerik giriniz."); return; }
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/questions/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ title: newTitle, content: newContent })
+      });
+      if (response.ok) {
+        setNewTitle(""); setNewContent("");
+        fetchQuestions(token);
+        setViewMode('feed'); 
+      }
+    } catch (error) { console.error(error); } 
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleSendAnswer = async (questionId) => {
+    if (!newAnswer.trim()) return;
+    setIsAnswerSubmitting(true);
+    try {
+        const response = await fetch('http://127.0.0.1:8000/answers/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ content: newAnswer, question_id: questionId })
+        });
+        if (response.ok) {
+            setNewAnswer("");
+            fetchAnswersForQuestion(questionId);
+            fetchMyAnswers(token);
+        }
+    } catch (error) { console.error(error); }
+    finally { setIsAnswerSubmitting(false); }
+  };
+
+  const fetchAnswersForQuestion = async (questionId) => {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/answers/question/${questionId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        setQuestionAnswers(prev => ({ ...prev, [questionId]: data }));
+    } catch (error) { console.error(error); }
+  };
+
+  // --- ACTIONS ---
+  const toggleNotifications = async () => {
+    const nextState = !isNotificationsOpen;
+    setIsNotificationsOpen(nextState);
+    setIsProfileOpen(false);
+    if (nextState) {
+        setUnreadCount(0);
+        await fetch('http://127.0.0.1:8000/notifications/mark-as-read', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+  };
+
+  const openQuestionModal = (question) => {
+      if (!question) return;
+      setSelectedQuestion(question);
+      fetchAnswersForQuestion(question.id);
+  };
+
+  const closeQuestionModal = () => { setSelectedQuestion(null); setNewAnswer(""); };
+  const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
+  const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
+  const saveProfileSettings = () => {
+      localStorage.setItem('custom_display_name', displayName);
+      setIsSettingsOpen(false);
+      alert("Profil güncellendi! ✅");
+  };
+  const handleLogout = () => { localStorage.clear(); navigate('/login'); };
+  const getInitial = (name) => name ? name.charAt(0).toUpperCase() : "?";
+
+  // --- DATA FILTERING ---
+  const myQuestions = questions.filter(q => q.owner?.email === userProfile?.email);
+  let displayContent;
+  if (viewMode === 'my_questions') {
+      displayContent = myQuestions;
+  } else if (viewMode === 'my_answers') {
+      displayContent = myAnswers;
+  } else {
+      displayContent = selectedDepartment === "Tümü" 
+        ? questions 
+        : questions.filter(q => q.owner?.department === selectedDepartment);
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0f1d] text-slate-300 font-sans selection:bg-red-500/30 flex flex-col">
+      
+      {/* --- NAVBAR --- */}
+      <nav className="sticky top-0 z-40 bg-[#0a0f1d]/80 backdrop-blur-xl border-b border-white/10 h-20 flex justify-between items-center px-6">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={handleGoHome}>
+          <img src="https://upload.wikimedia.org/wikipedia/tr/6/66/%C4%B0skenderun_Teknik_%C3%9Cniversitesi_logo.png" className="w-10 h-10 brightness-0 invert object-contain" alt="İSTE" />
+          <h1 className="text-xl font-bold text-white tracking-tight hidden sm:block">Akıl <span className="text-red-600">Kütüphanesi</span></h1>
+        </div>
+
+        <div className="flex items-center gap-4 relative">
+          <div className="hidden md:flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full">
+            <MapPin size={14} className="text-blue-400" />
+            <span className="text-blue-400 font-bold text-[10px] uppercase tracking-widest">İSTE Kütüphane</span>
+          </div>
+
+          {/* Zil (Bildirimler) */}
+          <div className="relative">
+            <button onClick={toggleNotifications} className={`p-2.5 rounded-full border transition-all ${isNotificationsOpen ? 'bg-red-600/20 text-red-500 border-red-500' : 'bg-white/5 border-white/10'}`}>
+              <Bell size={20} />
+              {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0f1d] animate-bounce">{unreadCount}</span>}
+            </button>
+            {isNotificationsOpen && (
+              <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                <div className="p-4 border-b border-white/5 bg-[#1a2035]"><h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3></div>
+                <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                    {notifications.length > 0 ? notifications.map(n => (
+                        <div key={n.id} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group flex gap-3">
+                            <div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0"><MessageSquare size={14} className="text-blue-400" /></div>
+                            <div>
+                                <p className="text-xs text-slate-300 leading-snug group-hover:text-white transition-colors">{n.content}</p>
+                                <span className="text-[10px] text-slate-600 mt-1 block">{new Date(n.created_at).toLocaleTimeString("tr-TR", {hour:'2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        </div>
+                    )) : <div className="py-12 text-center text-xs text-slate-500 italic">Henüz bildirim yok.</div>}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Profil Dropdown */}
+          <button onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotificationsOpen(false); }} className="flex items-center gap-2">
+            <div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-800 rounded-full flex items-center justify-center text-white font-bold border-2 border-[#0a0f1d] shadow-lg">{getInitial(displayName)}</div>
+            <ChevronDown size={16} className={`transition-transform duration-300 ${isProfileOpen ? 'rotate-180 text-red-500' : ''}`} />
+          </button>
+          
+          {isProfileOpen && (
+            <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+               <div className="bg-gradient-to-r from-red-900/50 to-red-600/50 p-6 flex flex-col items-center border-b border-white/5">
+                  <div className="h-16 w-16 bg-white text-red-600 rounded-full flex items-center justify-center text-2xl font-black mb-3 shadow-xl">{getInitial(displayName)}</div>
+                  <h3 className="text-white font-bold text-lg">{displayName}</h3>
+                  <span className="text-xs text-red-200 bg-black/20 px-3 py-1 rounded-full mt-1 backdrop-blur-sm truncate max-w-[200px]">{userProfile?.department || "Bölüm Yok"}</span>
+               </div>
+               <div className="grid grid-cols-2 gap-px bg-white/5 border-b border-white/5">
+                  <button onClick={() => { setViewMode('my_questions'); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group">
+                      <span className="block text-xl font-black text-white group-hover:text-red-400">{myQuestions.length}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Sorularım</span>
+                  </button>
+                  <button onClick={() => { setViewMode('my_answers'); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group">
+                      <span className="block text-xl font-black text-white group-hover:text-red-400">{myAnswers.length}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Cevaplarım</span>
+                  </button>
+               </div>
+               <div className="p-2 space-y-1">
+                  <button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group">
+                      <Settings size={16} className="text-blue-400"/> Profil Ayarları
+                  </button>
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group">
+                      <LogOut size={16} className="text-red-400"/> Çıkış Yap
+                  </button>
+               </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* --- SORU MODALI (ORTA BOY & FORUM) --- */}
+      {selectedQuestion && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><MessageSquare size={16} className="text-red-500"/> Soru Detayı</h3>
+                    <button onClick={closeQuestionModal} className="bg-white/5 hover:bg-red-600 hover:text-white text-slate-400 p-2 rounded-full transition-all"><X size={20} /></button>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">
+                                {selectedQuestion.owner ? getInitial(selectedQuestion.owner.email) : "?"}
+                            </div>
+                            <div>
+                                <h1 className="text-white font-bold text-sm">
+                                    {selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? selectedQuestion.owner.email.split('@')[0] : "Anonim")}
+                                </h1>
+                                <span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
+                        <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
+                    </div>
+                    <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
+                    <div className="space-y-4">
+                        {questionAnswers[selectedQuestion.id]?.length > 0 ? (
+                            questionAnswers[selectedQuestion.id].map(ans => (
+                                <div key={ans.id} className="flex gap-4">
+                                    <div className="flex-shrink-0 flex flex-col items-center gap-2"><div className="h-8 w-8 bg-[#1f2937] rounded-full flex items-center justify-center text-xs font-bold text-slate-300 border border-white/10">{ans.owner ? getInitial(ans.owner.email) : "?"}</div><div className="w-px flex-1 bg-white/5"></div></div>
+                                    <div className="flex-1 pb-4">
+                                        <div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h4 className="text-xs font-bold text-red-400">{ans.owner?.email === userProfile?.email ? displayName : (ans.owner ? ans.owner.email.split('@')[0] : "Misafir")}</h4>
+                                                <span className="text-[10px] text-slate-600">{new Date(ans.created_at).toLocaleTimeString("tr-TR", {hour: '2-digit', minute:'2-digit'})}</span>
+                                            </div>
+                                            <p className="text-sm text-slate-300 leading-relaxed">{ans.content}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : <div className="text-center py-8 opacity-50 text-xs">Henüz cevap yok.</div>}
+                    </div>
+                </div>
+                <div className="p-4 border-t border-white/10 bg-[#0d1117] shrink-0">
+                    <div className="flex gap-3">
+                        <input type="text" value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)} placeholder="Cevap yaz..." className="flex-1 bg-[#161b2c] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500/50 shadow-inner"/>
+                        <button onClick={() => handleSendAnswer(selectedQuestion.id)} disabled={isAnswerSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 rounded-xl font-bold flex items-center justify-center transition-all disabled:opacity-50">{isAnswerSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Send size={18}/>}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* --- PROFİL AYARLARI --- */}
+      {isSettingsOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-[#161b2c] w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                  <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a2035]"><h3 className="text-white font-bold text-lg flex items-center gap-2"><Settings size={20} className="text-red-500"/> Profil Ayarları</h3><button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white"><X size={20}/></button></div>
+                  <div className="p-8 space-y-6">
+                      <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Görünen İsim</label><input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 transition-colors"/></div>
+                      <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Bölüm</label><div className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-slate-400 cursor-not-allowed flex items-center justify-between">{userProfile?.department}<Info size={16}/></div></div>
+                  </div>
+                  <div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-end gap-3"><button onClick={() => setIsSettingsOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5">İptal</button><button onClick={saveProfileSettings} className="px-6 py-3 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg flex items-center gap-2"><Save size={16}/> Kaydet</button></div>
+              </div>
+          </div>
+      )}
+
+      {/* --- FİLTRELEME BUTONU (SOL ALT) --- */}
+      {viewMode === 'feed' && (
+        <div className="fixed bottom-8 left-8 z-40 flex flex-col items-start gap-4">
+            {isFilterOpen && (
+                <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-80 max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12}/> Bölüm Filtrele</h2><button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16}/></button></div>
+                    <nav className="space-y-1">{departments.map(dep => (<button key={dep} onClick={() => { setSelectedDepartment(dep); setIsFilterOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2 ${selectedDepartment === dep ? "bg-red-600 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><div className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${selectedDepartment === dep ? 'bg-white' : 'bg-slate-600'}`}></div>{dep}</button>))}</nav>
+                </div>
+            )}
+            <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">
+                {isFilterOpen ? <X size={20} /> : <Filter size={20} />}
+                <span className="text-sm max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
+                {selectedDepartment !== "Tümü" && !isFilterOpen && <div onClick={clearFilter} className="absolute -top-2 -right-2 bg-white text-red-600 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0a0f1d] hover:scale-110 shadow-sm"><X size={14} strokeWidth={3} /></div>}
+            </button>
+        </div>
+      )}
+
+      {/* --- ANA İÇERİK --- */}
+      <div className="flex-1 max-w-7xl mx-auto w-full relative">
+        <main className="max-w-3xl mx-auto w-full p-6 md:p-10 space-y-8">
+          
+          {/* ANA SAYFAYA DÖN BUTONU (Sadece Alt Sayfalarda) */}
+          {(viewMode !== 'feed' || selectedDepartment !== "Tümü") && (
+              <button onClick={handleGoHome} className="group flex items-center gap-3 text-slate-400 hover:text-white mb-6 transition-all font-bold text-sm bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full border border-white/10 backdrop-blur-md shadow-lg">
+                  <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                  <span>Ana Sayfaya Dön</span>
+              </button>
+          )}
+
+          {/* SORU SORMA ALANI (Sadece Ana Sayfada) */}
+          {viewMode === 'feed' && selectedDepartment === "Tümü" && (
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex gap-4">
+                    <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div>
+                    <div className="flex-1 space-y-3">
+                        <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold"/>
+                        <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
+                        <div className="flex justify-end pt-2">
+                            <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50">
+                                {isSubmitting ? <Loader2 className="animate-spin" size={16}/> : <Send size={16} />}
+                                {isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          )}
+
+          {/* LİSTE BAŞLIĞI */}
+          <div className="space-y-6 pb-24">
+            <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
+              {viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))}
+              <span className="text-slate-600 ml-1">({displayContent.length})</span>
+            </h2>
+
+            {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40}/> : 
+             displayContent.length > 0 ? (
+             displayContent.map(item => (
+                viewMode === 'my_answers' ? (
+                    /* --- CEVAPLARIM KARTI --- */
+                    <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span>
+                                <h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>
+                                    {item.question?.title || `Soru ID: #${item.question_id}`}
+                                </h4>
+                            </div>
+                            <span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
+                        </div>
+                        <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative">
+                            <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div>
+                            <p className="text-slate-300 italic text-sm">"{item.content}"</p>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
+                             <button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12}/></button>
+                        </div>
+                    </div>
+                ) : (
+                /* --- STANDART SORU KARTI --- */
+                <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300">
+                             {item.owner?.email === userProfile?.email ? getInitial(displayName) : (item.owner ? getInitial(item.owner.email) : "?")}
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-sm leading-none flex items-center gap-2">
+                              {item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}
+                              {item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}
+                          </h3>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10}/>{item.owner?.department || "Genel"}</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
+                    </div>
+                    
+                    <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer" onClick={() => openQuestionModal(item)}>{item.title}</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
+                    
+                    <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
+                        <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10">
+                            <Maximize2 size={14} className="text-blue-400"/> İncele
+                        </button>
+                        <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2">
+                            <MessageCircle size={14}/> Cevapla
+                        </button>
+                    </div>
+                </div>
+                )
+             ))
+             ) : (
+                <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center">
+                    <Info size={32} className="mb-4 text-slate-700" />
+                    <h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3>
+                    <p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p>
+                </div>
+             )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
