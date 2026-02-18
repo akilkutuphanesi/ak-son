@@ -9,7 +9,9 @@ class Question(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100))
     content = Column(String(1000))
-    # image_url BURADAN KALDIRILDI
+    # --- YENİ EKLENEN KISIM (Resim Linki) ---
+    image_url = Column(String(500), nullable=True)
+    # ----------------------------------------
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.now)
 
