@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, ChevronUp, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Home } from 'lucide-react';
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const API_BASE = "http://127.0.0.1:8000";
 
-  // --- STATE'LER (Kamera state'leri kaldırıldı) ---
+  // --- STATE'LER ---
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -30,6 +30,10 @@ export default function Dashboard() {
   const [questionAnswers, setQuestionAnswers] = useState({});
   const [newAnswer, setNewAnswer] = useState("");
   const [isAnswerSubmitting, setIsAnswerSubmitting] = useState(false);
+
+  // Silme işlemleri için state
+  const [isDeletingQuestion, setIsDeletingQuestion] = useState(null);
+  const [isDeletingAnswer, setIsDeletingAnswer] = useState(null);
 
   const departments = ["Tümü", "Bilgisayar Mühendisliği", "Biyomedikal Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", "Denizcilik İşletmeleri Yönetimi", "Ekonomi", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", "Gastronomi ve Mutfak Sanatları", "Gemi İnşaatı ve Gemi Makineleri Mühendisliği", "Havacılık Elektrik ve Elektroniği", "Havacılık ve Uzay Mühendisliği", "Havacılık Yönetimi", "İç Mimarlık", "İnşaat Mühendisliği", "Lojistik Yönetimi"];
 
@@ -68,7 +72,7 @@ export default function Dashboard() {
       const response = await fetch(`${API_BASE}/questions/`, { headers: { 'Authorization': `Bearer ${authToken}` } });
       if (response.status === 401) { handleLogout(); return; }
       const data = await response.json();
-      if (Array.isArray(data)) setQuestions(data.reverse());
+      if (Array.isArray(data)) setQuestions(data);
     } catch (error) { console.error(error); } 
     finally { setIsLoading(false); }
   };
@@ -77,7 +81,7 @@ export default function Dashboard() {
       try {
           const response = await fetch(`${API_BASE}/answers/me`, { headers: { 'Authorization': `Bearer ${authToken}` } });
           const data = await response.json();
-          if (Array.isArray(data)) setMyAnswers(data.reverse());
+          if (Array.isArray(data)) setMyAnswers(data);
       } catch (error) { console.error(error); }
   };
 
@@ -86,7 +90,7 @@ export default function Dashboard() {
         const response = await fetch(`${API_BASE}/notifications/`, { headers: { 'Authorization': `Bearer ${authToken}` } });
         const data = await response.json();
         if (Array.isArray(data)) {
-            setNotifications(data.reverse());
+            setNotifications(data);
             setUnreadCount(data.filter(n => !n.is_read).length);
         }
     } catch (error) { console.error(error); }
@@ -96,7 +100,6 @@ export default function Dashboard() {
     if (!newTitle.trim() || !newContent.trim()) { alert("Başlık ve içerik giriniz."); return; }
     setIsSubmitting(true);
     try {
-      // JSON formatına geri döndük (FormData yerine)
       const response = await fetch(`${API_BASE}/questions/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -109,6 +112,47 @@ export default function Dashboard() {
       }
     } catch (error) { alert("Sunucu bağlantı hatası!"); } 
     finally { setIsSubmitting(false); }
+  };
+
+  // --- SORU SİLME ---
+  const handleDeleteQuestion = async (questionId, e = null) => {
+      if (e) e.stopPropagation();
+      if (!window.confirm("Bu soruyu silmek istediğine emin misin?")) return;
+
+      setIsDeletingQuestion(questionId);
+      try {
+          const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+              setQuestions(prev => prev.filter(q => q.id !== questionId));
+              if (selectedQuestion?.id === questionId) setSelectedQuestion(null);
+          } else { alert("Silinemedi."); }
+      } catch (error) { alert("Hata oluştu."); } 
+      finally { setIsDeletingQuestion(null); }
+  };
+
+  // --- CEVAP SİLME ---
+  const handleDeleteAnswer = async (answerId) => {
+      if (!window.confirm("Bu cevabı silmek istediğine emin misin?")) return;
+      setIsDeletingAnswer(answerId);
+      try {
+          const response = await fetch(`${API_BASE}/answers/${answerId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+              if (selectedQuestion) {
+                  setQuestionAnswers(prev => ({
+                      ...prev,
+                      [selectedQuestion.id]: prev[selectedQuestion.id].filter(a => a.id !== answerId)
+                  }));
+              }
+              fetchMyAnswers(token);
+          } else { alert("Cevap silinemedi."); }
+      } catch (error) { alert("Hata oluştu."); }
+      finally { setIsDeletingAnswer(null); }
   };
 
   const handleSendAnswer = async (questionId) => {
@@ -124,8 +168,11 @@ export default function Dashboard() {
             setNewAnswer("");
             fetchAnswersForQuestion(questionId);
             fetchMyAnswers(token);
+        } else {
+            const errData = await response.json();
+            alert("Cevap gönderilemedi: " + (errData.detail || "Bilinmeyen hata"));
         }
-    } catch (error) { alert("Cevap gönderilemedi"); }
+    } catch (error) { alert("Sunucu hatası"); }
     finally { setIsAnswerSubmitting(false); }
   };
 
@@ -148,7 +195,49 @@ export default function Dashboard() {
 
   const openQuestionModal = (question) => { if (!question) return; setSelectedQuestion(question); fetchAnswersForQuestion(question.id); };
   const closeQuestionModal = () => { setSelectedQuestion(null); setNewAnswer(""); };
-  const handleNotificationClick = (n) => { if (n.question_id) { const q = questions.find(item => item.id === n.question_id); if (q) { openQuestionModal(q); setIsNotificationsOpen(false); } else { alert("Soru bulunamadı."); } } };
+
+  // --- AKILLI BİLDİRİM TIKLAMA FONKSİYONU ---
+  const handleNotificationClick = async (n) => {
+      // 1. Menüyü kapat ve okundu yap
+      setIsNotificationsOpen(false);
+      try { 
+          await fetch(`${API_BASE}/notifications/mark-as-read`, { 
+              method: 'POST', 
+              headers: { 'Authorization': `Bearer ${token}` } 
+          });
+          setUnreadCount(0);
+          fetchNotifications(token);
+      } catch(e) {}
+
+      // 2. Eğer bildirimde Soru ID varsa
+      if (n.question_id) {
+          // A. Önce eldeki listede var mı diye bak (Hız için)
+          const localQuestion = questions.find(item => item.id === n.question_id);
+          
+          if (localQuestion) {
+              openQuestionModal(localQuestion);
+          } else {
+              // B. Listede yoksa (Filtre vb.) Sunucudan o soruyu çek
+              setIsLoading(true);
+              try {
+                  const response = await fetch(`${API_BASE}/questions/${n.question_id}`, {
+                      headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  if (response.ok) {
+                      const questionData = await response.json();
+                      openQuestionModal(questionData);
+                  } else {
+                      alert("Bu soru silinmiş veya ulaşılamıyor.");
+                  }
+              } catch (error) {
+                  console.error("Soru detayı çekilemedi:", error);
+              } finally {
+                  setIsLoading(false);
+              }
+          }
+      }
+  };
+
   const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
   const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
   const saveProfileSettings = () => { localStorage.setItem('custom_display_name', displayName); setIsSettingsOpen(false); alert("Profil güncellendi! ✅"); };
@@ -195,14 +284,70 @@ export default function Dashboard() {
         </div>
       </nav>
 
+      {/* --- SORU MODALI --- */}
       {selectedQuestion && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><MessageSquare size={16} className="text-red-500"/> Soru Detayı</h3><button onClick={closeQuestionModal} className="bg-white/5 hover:bg-red-600 hover:text-white text-slate-400 p-2 rounded-full transition-all"><X size={20} /></button></div>
+                <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <MessageSquare size={16} className="text-red-500"/> Soru Detayı
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        {/* --- MODAL İÇİNDEKİ SİLME BUTONU --- */}
+                        {userProfile?.email === selectedQuestion.owner?.email && (
+                            <button 
+                                onClick={() => handleDeleteQuestion(selectedQuestion.id)} 
+                                className="bg-red-500/10 hover:bg-red-600 hover:text-white text-red-500 p-2 rounded-full transition-all"
+                                title="Bu soruyu sil"
+                            >
+                                {isDeletingQuestion === selectedQuestion.id ? <Loader2 className="animate-spin" size={20}/> : <Trash2 size={20} />}
+                            </button>
+                        )}
+                        <button onClick={closeQuestionModal} className="bg-white/5 hover:bg-white/20 text-slate-400 hover:text-white p-2 rounded-full transition-all">
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+                
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
-                    <div className="space-y-4"><div className="flex items-center gap-3"><div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">{selectedQuestion.owner ? getInitial(selectedQuestion.owner.email) : "?"}</div><div><h1 className="text-white font-bold text-sm">{selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? selectedQuestion.owner.email.split('@')[0] : "Anonim")}</h1><span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span></div></div><h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2><div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div></div>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3"><div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">{selectedQuestion.owner ? getInitial(selectedQuestion.owner.email) : "?"}</div><div><h1 className="text-white font-bold text-sm">{selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? selectedQuestion.owner.email.split('@')[0] : "Anonim")}</h1><span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span></div></div>
+                        <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
+                        <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
+                    </div>
                     <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
-                    <div className="space-y-4">{questionAnswers[selectedQuestion.id]?.length > 0 ? (questionAnswers[selectedQuestion.id].map(ans => (<div key={ans.id} className="flex gap-4"><div className="flex-shrink-0 flex flex-col items-center gap-2"><div className="h-8 w-8 bg-[#1f2937] rounded-full flex items-center justify-center text-xs font-bold text-slate-300 border border-white/10">{ans.owner ? getInitial(ans.owner.email) : "?"}</div><div className="w-px flex-1 bg-white/5"></div></div><div className="flex-1 pb-4"><div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg"><div className="flex justify-between items-center mb-2"><h4 className="text-xs font-bold text-red-400">{ans.owner?.email === userProfile?.email ? displayName : (ans.owner ? ans.owner.email.split('@')[0] : "Misafir")}</h4><span className="text-[10px] text-slate-600">{new Date(ans.created_at).toLocaleTimeString("tr-TR", {hour: '2-digit', minute:'2-digit'})}</span></div><p className="text-sm text-slate-300 leading-relaxed">{ans.content}</p></div></div></div>))) : <div className="text-center py-8 opacity-50 text-xs">Henüz cevap yok.</div>}</div>
+                    
+                    {/* --- CEVAP LİSTESİ --- */}
+                    <div className="space-y-4">
+                        {questionAnswers[selectedQuestion.id]?.length > 0 ? (
+                            questionAnswers[selectedQuestion.id].map(ans => (
+                                <div key={ans.id} className="flex gap-4 group/answer">
+                                    <div className="flex-shrink-0 flex flex-col items-center gap-2"><div className="h-8 w-8 bg-[#1f2937] rounded-full flex items-center justify-center text-xs font-bold text-slate-300 border border-white/10">{ans.owner ? getInitial(ans.owner.email) : "?"}</div><div className="w-px flex-1 bg-white/5"></div></div>
+                                    <div className="flex-1 pb-4">
+                                        <div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg relative">
+                                            
+                                            {/* --- CEVAP SİLME BUTONU --- */}
+                                            {userProfile?.email === ans.owner?.email && (
+                                                <button 
+                                                    onClick={() => handleDeleteAnswer(ans.id)}
+                                                    className="absolute top-2 right-2 text-slate-600 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-500/10 transition-all opacity-0 group-hover/answer:opacity-100"
+                                                    title="Cevabı Sil"
+                                                >
+                                                    {isDeletingAnswer === ans.id ? <Loader2 className="animate-spin" size={14}/> : <Trash2 size={14} />}
+                                                </button>
+                                            )}
+
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h4 className="text-xs font-bold text-red-400">{ans.owner?.email === userProfile?.email ? displayName : (ans.owner ? ans.owner.email.split('@')[0] : "Misafir")}</h4>
+                                                <span className="text-[10px] text-slate-600 pr-6">{new Date(ans.created_at).toLocaleTimeString("tr-TR", {hour: '2-digit', minute:'2-digit'})}</span>
+                                            </div>
+                                            <p className="text-sm text-slate-300 leading-relaxed">{ans.content}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : <div className="text-center py-8 opacity-50 text-xs">Henüz cevap yok.</div>}
+                    </div>
                 </div>
                 <div className="p-4 border-t border-white/10 bg-[#0d1117] shrink-0"><div className="flex gap-3"><input type="text" value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)} placeholder="Cevap yaz..." className="flex-1 bg-[#161b2c] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500/50 shadow-inner"/><button onClick={() => handleSendAnswer(selectedQuestion.id)} disabled={isAnswerSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 rounded-xl font-bold flex items-center justify-center transition-all disabled:opacity-50">{isAnswerSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Send size={18}/>}</button></div></div>
             </div>
@@ -219,7 +364,52 @@ export default function Dashboard() {
           {viewMode === 'feed' && selectedDepartment === "Tümü" && (<div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group"><div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div><div className="flex gap-4"><div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div><div className="flex-1 space-y-3"><input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold"/><textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea><div className="flex justify-end pt-2"><button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50">{isSubmitting ? <Loader2 className="animate-spin" size={16}/> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}</button></div></div></div></div>)}
           <div className="space-y-6 pb-24">
             <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2"><div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>{viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))}<span className="text-slate-600 ml-1">({displayContent.length})</span></h2>
-            {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40}/> : displayContent.length > 0 ? (displayContent.map(item => (viewMode === 'my_answers' ? (<div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group"><div className="flex justify-between items-start mb-3"><div className="flex-1"><span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span><h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>{item.question?.title || `Soru ID: #${item.question_id}`}</h4></div><span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span></div><div className="bg-black/20 p-4 rounded-xl border border-white/5 relative"><div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div><p className="text-slate-300 italic text-sm">"{item.content}"</p></div><div className="mt-4 pt-4 border-t border-white/5 flex justify-end"><button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12}/></button></div></div>) : (<div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group"><div className="flex justify-between items-start mb-4"><div className="flex items-center gap-3"><div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300">{item.owner?.email === userProfile?.email ? getInitial(displayName) : (item.owner ? getInitial(item.owner.email) : "?")}</div><div><h3 className="text-white font-bold text-sm leading-none flex items-center gap-2">{item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10}/>{item.owner?.department || "Genel"}</p></div></div><span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span></div><h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer" onClick={() => openQuestionModal(item)}>{item.title}</h4><p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p><div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500"><button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10"><Maximize2 size={14} className="text-blue-400"/> İncele</button><button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2"><MessageCircle size={14}/> Cevapla</button></div></div>)))) : (<div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center"><Info size={32} className="mb-4 text-slate-700" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>)}
+            {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40}/> : displayContent.length > 0 ? (
+                displayContent.map(item => (
+                    viewMode === 'my_answers' ? (
+                        <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
+                            <div className="flex justify-between items-start mb-3"><div className="flex-1"><span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span><h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>{item.question?.title || `Soru ID: #${item.question_id}`}</h4></div><span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span></div><div className="bg-black/20 p-4 rounded-xl border border-white/5 relative"><div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div><p className="text-slate-300 italic text-sm">"{item.content}"</p></div><div className="mt-4 pt-4 border-t border-white/5 flex justify-end"><button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12}/></button></div>
+                        </div>
+                    ) : (
+                        <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group relative">
+                            {/* --- SORU KARTI SİLME BUTONU (SAĞ ÜST) --- */}
+                            {userProfile?.email === item.owner?.email && (
+                                <button 
+                                    onClick={(e) => handleDeleteQuestion(item.id, e)} 
+                                    className="absolute top-4 right-4 p-2 rounded-full bg-[#1a1f2e] text-slate-500 hover:bg-red-500 hover:text-white border border-white/5 hover:border-red-500 transition-all z-20 shadow-lg"
+                                    title="Soruyu Sil"
+                                >
+                                    {isDeletingQuestion === item.id ? <Loader2 className="animate-spin" size={16}/> : <Trash2 size={16} />}
+                                </button>
+                            )}
+
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300">
+                                        {item.owner?.email === userProfile?.email ? getInitial(displayName) : (item.owner ? getInitial(item.owner.email) : "?")}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-white font-bold text-sm leading-none flex items-center gap-2">
+                                            {item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}
+                                            {item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}
+                                        </h3>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10}/>{item.owner?.department || "Genel"}</p>
+                                    </div>
+                                </div>
+                                <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
+                            <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
+                            <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
+                                <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10"><Maximize2 size={14} className="text-blue-400"/> İncele</button>
+                                <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2"><MessageCircle size={14}/> Cevapla</button>
+                            </div>
+                        </div>
+                    )
+                ))
+            ) : (
+                <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center"><Info size={32} className="mb-4 text-slate-700" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>
+            )}
           </div>
         </main>
       </div>
