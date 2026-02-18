@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip } from 'lucide-react';
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const API_BASE = "http://127.0.0.1:8000";
-
+  const API_BASE = "http://172.20.10.9:8000";
   // --- STATE'LER ---
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -25,9 +24,16 @@ export default function Dashboard() {
   
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [newImage, setNewImage] = useState(null); // Resim dosyası
-  const [imagePreview, setImagePreview] = useState(null); // Resim önizleme
-  const fileInputRef = useRef(null); // Dosya input referansı
+  
+  // --- RESİM VE KAMERA STATE'LERİ ---
+  const [newImage, setNewImage] = useState(null); 
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null); 
+  
+  const [isCameraOpen, setIsCameraOpen] = useState(false); // Kamera açık mı?
+  const videoRef = useRef(null); // Video elementini tutar
+  const canvasRef = useRef(null); // Fotoğrafı dondurmak için
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [questionAnswers, setQuestionAnswers] = useState({});
@@ -98,16 +104,13 @@ export default function Dashboard() {
     } catch (error) { console.error(error); }
   };
 
-  // --- RESİM SEÇME FONKSİYONU ---
+  // --- RESİM İŞLEMLERİ (GALERİ) ---
   const handleImageChange = (e) => {
       const file = e.target.files[0];
       if (file) {
           setNewImage(file);
-          // Önizleme oluştur
           const reader = new FileReader();
-          reader.onloadend = () => {
-              setImagePreview(reader.result);
-          };
+          reader.onloadend = () => setImagePreview(reader.result);
           reader.readAsDataURL(file);
       }
   };
@@ -118,13 +121,61 @@ export default function Dashboard() {
       if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // --- SORU OLUŞTURMA (RESİMLİ) ---
+  // --- KAMERA İŞLEMLERİ ---
+  const startCamera = async () => {
+      setIsCameraOpen(true);
+      try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+          }
+      } catch (err) {
+          console.error("Kamera hatası:", err);
+          alert("Kameraya erişilemedi. İzinleri kontrol edin.");
+          setIsCameraOpen(false);
+      }
+  };
+
+  const stopCamera = () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+          const tracks = videoRef.current.srcObject.getTracks();
+          tracks.forEach(track => track.stop());
+          videoRef.current.srcObject = null;
+      }
+      setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (video && canvas) {
+          // Videoyu canvas'a çiz
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const context = canvas.getContext('2d');
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Canvas'ı Blob'a (Dosyaya) çevir
+          canvas.toBlob(blob => {
+              const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
+              setNewImage(file); // Galeriden seçmiş gibi state'e atıyoruz
+              
+              // Önizleme oluştur
+              const reader = new FileReader();
+              reader.onloadend = () => setImagePreview(reader.result);
+              reader.readAsDataURL(file);
+              
+              stopCamera(); // Fotoğrafı çektikten sonra kamerayı kapat
+          }, 'image/jpeg');
+      }
+  };
+
+  // --- SORU YAYINLAMA ---
   const handleCreateQuestion = async () => {
     if (!newTitle.trim() || !newContent.trim()) { alert("Başlık ve içerik giriniz."); return; }
     setIsSubmitting(true);
     
     try {
-      // JSON yerine FormData kullanıyoruz (Resim göndermek için şart)
       const formData = new FormData();
       formData.append('title', newTitle);
       formData.append('content', newContent);
@@ -134,10 +185,7 @@ export default function Dashboard() {
 
       const response = await fetch(`${API_BASE}/questions/`, {
         method: 'POST',
-        headers: { 
-            'Authorization': `Bearer ${token}` 
-            // Content-Type header'ını siliyoruz, FormData otomatik ayarlar
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
@@ -145,9 +193,7 @@ export default function Dashboard() {
         setNewTitle(""); setNewContent(""); removeImage();
         fetchQuestions(token);
         setViewMode('feed'); 
-      } else {
-          alert("Hata oluştu.");
-      }
+      } else { alert("Hata oluştu."); }
     } catch (error) { alert("Sunucu bağlantı hatası!"); } 
     finally { setIsSubmitting(false); }
   };
@@ -285,7 +331,32 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* --- SORU MODALI --- */}
+      {/* --- KAMERA MODALI (Yeni Eklendi) --- */}
+      {isCameraOpen && (
+          <div className="fixed inset-0 z-[110] bg-black/90 flex flex-col items-center justify-center">
+              <div className="relative w-full max-w-2xl bg-black rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+                  {/* Video Akışı */}
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-[60vh] object-cover transform scale-x-[-1]"></video>
+                  <canvas ref={canvasRef} className="hidden"></canvas>
+                  
+                  {/* Kontroller */}
+                  <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/50 to-transparent flex justify-between items-center">
+                      <button onClick={stopCamera} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
+                          <X size={24}/>
+                      </button>
+                      
+                      <button onClick={capturePhoto} className="h-16 w-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-all group">
+                          <div className="h-12 w-12 bg-white rounded-full group-hover:bg-red-500 transition-colors"></div>
+                      </button>
+                      
+                      <div className="w-12"></div> {/* Hizalama için boşluk */}
+                  </div>
+              </div>
+              <p className="text-slate-400 mt-4 text-sm animate-pulse">Fotoğrafı çekmek için butona bas</p>
+          </div>
+      )}
+
+      {/* --- SORU DETAY MODALI --- */}
       {selectedQuestion && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
@@ -308,7 +379,6 @@ export default function Dashboard() {
                         <div className="flex items-center gap-3"><div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">{selectedQuestion.owner ? getInitial(selectedQuestion.owner.email) : "?"}</div><div><h1 className="text-white font-bold text-sm">{selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? selectedQuestion.owner.email.split('@')[0] : "Anonim")}</h1><span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span></div></div>
                         <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
                         <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
-                        {/* --- MODALDA RESİM GÖSTERME --- */}
                         {selectedQuestion.image_url && (
                             <div className="mt-4 rounded-xl overflow-hidden border border-white/10">
                                 <img src={`${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full object-cover max-h-[400px]" />
@@ -358,7 +428,6 @@ export default function Dashboard() {
                         <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold"/>
                         <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
                         
-                        {/* --- RESİM ÖNİZLEME ALANI --- */}
                         {imagePreview && (
                             <div className="relative inline-block mt-2">
                                 <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20" />
@@ -367,11 +436,15 @@ export default function Dashboard() {
                         )}
 
                         <div className="flex justify-between items-center pt-2">
-                            {/* --- RESİM SEÇME BUTONU --- */}
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-2">
+                                {/* GALERİ BUTONU */}
                                 <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                                 <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
                                     <Paperclip size={16} /> Fotoğraf Ekle
+                                </button>
+                                {/* KAMERA BUTONU (YENİ) */}
+                                <button onClick={startCamera} className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
+                                    <Camera size={16} /> Kamera
                                 </button>
                             </div>
 
@@ -409,7 +482,6 @@ export default function Dashboard() {
                             <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
                             <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
                             
-                            {/* --- FEED İÇİNDE RESİM GÖSTERME (EĞER VARSA) --- */}
                             {item.image_url && (
                                 <div className="mb-6 rounded-xl overflow-hidden border border-white/10" onClick={() => openQuestionModal(item)}>
                                     <img src={`${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" />
