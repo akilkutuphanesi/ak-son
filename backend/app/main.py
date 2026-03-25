@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routers import auth_router, question_router, answer_router, notification_router
 from app.core.database import engine, Base
-from sqlalchemy import text
 import os
 
 # Veritabanı tablolarını oluştur
@@ -34,19 +33,3 @@ app.include_router(notification_router.router)
 @app.get("/")
 def home():
     return {"status": "Backend Çalışıyor"}
-
-# Sıfırlama (DB güncellemesi için gerekli)
-@app.get("/reset-db")
-def reset_database():
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("DROP TABLE IF EXISTS notifications;"))
-            connection.execute(text("DROP TABLE IF EXISTS answers;"))
-            connection.execute(text("DROP TABLE IF EXISTS questions;"))
-            # Users tablosunu da silelim ki temiz başlangıç olsun
-            connection.execute(text("DROP TABLE IF EXISTS users;"))
-            connection.commit()
-        Base.metadata.create_all(bind=engine)
-        return {"message": "BAŞARILI! Tablolar resim özelliğiyle yeniden kuruldu."}
-    except Exception as e:
-        return {"message": "Hata oluştu", "error": str(e)}
