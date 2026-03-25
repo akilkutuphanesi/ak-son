@@ -9,6 +9,10 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // --- BURAYI GÜNCELLEDİK ---
+  // Telefonunun bağlanması için IP adresini buraya yazıyoruz
+  const API_BASE = "http://172.20.10.9:8000"; 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -17,11 +21,15 @@ export default function Login() {
       const formData = new URLSearchParams();
       formData.append('username', email); 
       formData.append('password', password);
-      const response = await fetch('http://127.0.0.1:8000/auth/login', {
+      
+      // --- BURASI DEĞİŞTİ (Değişkeni kullandık) ---
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData,
       });
+      // ---------------------------------------------
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Giriş başarısız.");
       if (data.access_token) {
