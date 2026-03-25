@@ -46,6 +46,10 @@ export default function Dashboard() {
 
     const departments = ["Tümü", "Bilgisayar Mühendisliği", "Biyomedikal Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", "Denizcilik İşletmeleri Yönetimi", "Ekonomi", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", "Gastronomi ve Mutfak Sanatları", "Gemi İnşaatı ve Gemi Makineleri Mühendisliği", "Havacılık Elektrik ve Elektroniği", "Havacılık ve Uzay Mühendisliği", "Havacılık Yönetimi", "İç Mimarlık", "İnşaat Mühendisliği", "Lojistik Yönetimi"];
 
+    const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
+    const [passwordData, setPasswordData] = useState({ old: "", new: "", confirm: "" });
+    const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         const storedName = localStorage.getItem('custom_display_name');
@@ -63,6 +67,25 @@ export default function Dashboard() {
         };
         initData();
     }, []);
+
+    // Geri tuşuna basıldığında eğer kamera açıksa kamerayı kapat, sayfadan çıkma
+useEffect(() => {
+    const handleBackButton = (e) => {
+        if (isCameraOpen) {
+            e.preventDefault(); // Sayfanın geri gitmesini engelle
+            stopCamera();       // Kamerayı kapat
+            // Tarayıcı geçmişine hayali bir durum ekleyerek sayfada tut
+            window.history.pushState(null, null, window.location.pathname);
+        }
+    };
+
+    if (isCameraOpen) {
+        window.history.pushState(null, null, window.location.pathname);
+        window.addEventListener('popstate', handleBackButton);
+    }
+
+    return () => window.removeEventListener('popstate', handleBackButton);
+}, [isCameraOpen]);
 
     const fetchUserProfile = async (authToken) => {
         try {
@@ -289,6 +312,44 @@ export default function Dashboard() {
     const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
     const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
     const saveProfileSettings = () => { localStorage.setItem('custom_display_name', displayName); setIsSettingsOpen(false); alert("Profil güncellendi! ✅"); };
+    const handleChangePassword = async () => {
+    if (passwordData.new !== passwordData.confirm) {
+        alert("Yeni şifreler eşleşmiyor!");
+        return;
+    }
+    if (passwordData.new.length < 6) {
+        alert("Şifre en az 6 karakter olmalıdır!");
+        return;
+    }
+
+    setIsPasswordSubmitting(true);
+    try {
+        const response = await fetch(`${API_BASE}/auth/change-password`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({
+                old_password: passwordData.old,
+                new_password: passwordData.new
+            })
+        });
+
+        if (response.ok) {
+            alert("Şifre başarıyla değiştirildi! ✅");
+            setIsPasswordSectionOpen(false);
+            setPasswordData({ old: "", new: "", confirm: "" });
+        } else {
+            const err = await response.json();
+            alert(err.detail || "Bir hata oluştu.");
+        }
+    } catch (error) {
+        alert("Sunucu bağlantı hatası!");
+    } finally {
+        setIsPasswordSubmitting(false);
+    }
+};
     const handleLogout = () => { localStorage.clear(); navigate('/login'); };
     const getInitial = (name) => name ? name.charAt(0).toUpperCase() : "?";
 
@@ -413,13 +474,122 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {isSettingsOpen && (<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"><div className="bg-[#161b2c] w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden"><div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a2035]"><h3 className="text-white font-bold text-lg flex items-center gap-2"><Settings size={20} className="text-red-500" /> Profil Ayarları</h3><button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white"><X size={20} /></button></div><div className="p-8 space-y-6"><div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Görünen İsim</label><input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 transition-colors" /></div><div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Bölüm</label><div className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-slate-400 cursor-not-allowed flex items-center justify-between">{userProfile?.department}<Info size={16} /></div></div></div><div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-end gap-3"><button onClick={() => setIsSettingsOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5">İptal</button><button onClick={saveProfileSettings} className="px-6 py-3 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg flex items-center gap-2"><Save size={16} /> Kaydet</button></div></div></div>)}
+            {/* --- PROFİL AYARLARI MODALI --- */}
+            {isSettingsOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[#161b2c] w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a2035]">
+                            <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                                <Settings size={20} className="text-red-500" /> Profil Ayarları
+                            </h3>
+                            <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Görünen İsim</label>
+                                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 transition-colors" />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Bölüm</label>
+                                <div className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-slate-400 cursor-not-allowed flex items-center justify-between">
+                                    {userProfile?.department}<Info size={16} />
+                                </div>
+                            </div>
 
-            {viewMode === 'feed' && (<div className="fixed bottom-8 left-8 z-40 flex flex-col items-start gap-4">{isFilterOpen && (<div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-80 max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300"><div className="flex justify-between items-center mb-4 px-2"><h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12} /> Bölüm Filtrele</h2><button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16} /></button></div><nav className="space-y-1">{departments.map(dep => (<button key={dep} onClick={() => { setSelectedDepartment(dep); setIsFilterOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2 ${selectedDepartment === dep ? "bg-red-600 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><div className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${selectedDepartment === dep ? 'bg-white' : 'bg-slate-600'}`}></div>{dep}</button>))}</nav></div>)}<button onClick={() => setIsFilterOpen(!isFilterOpen)} className="group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">{isFilterOpen ? <X size={20} /> : <Filter size={20} />}<span className="text-sm max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>{selectedDepartment !== "Tümü" && !isFilterOpen && <div onClick={clearFilter} className="absolute -top-2 -right-2 bg-white text-red-600 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0a0f1d] hover:scale-110 shadow-sm"><X size={14} strokeWidth={3} /></div>}</button></div>)}
+                            {/* --- ŞİFRE DEĞİŞTİRME BÖLÜMÜ --- */}
+                            <div className="pt-4 border-t border-white/5">
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
+                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors"
+                                >
+                                    {isPasswordSectionOpen ? "Vazgeç" : "Şifre Değiştirmek İstiyorum"}
+                                </button>
+
+                                {isPasswordSectionOpen && (
+                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <input 
+                                            type="password" 
+                                            placeholder="Mevcut Şifre"
+                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50"
+                                            value={passwordData.old}
+                                            onChange={(e) => setPasswordData({...passwordData, old: e.target.value})}
+                                        />
+                                        <input 
+                                            type="password" 
+                                            placeholder="Yeni Şifre"
+                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50"
+                                            value={passwordData.new}
+                                            onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
+                                        />
+                                        <input 
+                                            type="password" 
+                                            placeholder="Yeni Şifre (Tekrar)"
+                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50"
+                                            value={passwordData.confirm}
+                                            onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={handleChangePassword}
+                                            disabled={isPasswordSubmitting}
+                                            className="w-full py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-500/20 transition-all"
+                                        >
+                                            {isPasswordSubmitting ? "İşleniyor..." : "Şifreyi Güncelle"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-end gap-3">
+                            <button onClick={() => setIsSettingsOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5">İptal</button>
+                            <button onClick={saveProfileSettings} className="px-6 py-3 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg flex items-center gap-2">
+                                <Save size={16} /> Kaydet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- ALT NAVİGASYON VE FİLTRE --- */}
+            {viewMode === 'feed' && (
+                <div className="fixed bottom-8 left-8 z-40 flex flex-col items-start gap-4">
+                    {isFilterOpen && (
+                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-80 max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
+                            <div className="flex justify-between items-center mb-4 px-2">
+                                <h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12} /> Bölüm Filtrele</h2>
+                                <button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16} /></button>
+                            </div>
+                            <nav className="space-y-1">
+                                {departments.map(dep => (
+                                    <button key={dep} onClick={() => { setSelectedDepartment(dep); setIsFilterOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2 ${selectedDepartment === dep ? "bg-red-600 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}>
+                                        <div className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${selectedDepartment === dep ? 'bg-white' : 'bg-slate-600'}`}></div>{dep}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    )}
+                    <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">
+                        {isFilterOpen ? <X size={20} /> : <Filter size={20} />}
+                        <span className="text-sm max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
+                        {selectedDepartment !== "Tümü" && !isFilterOpen && <div onClick={clearFilter} className="absolute -top-2 -right-2 bg-white text-red-600 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0a0f1d] hover:scale-110 shadow-sm"><X size={14} strokeWidth={3} /></div>}
+                    </button>
+                </div>
+            )}
 
             <div className="flex-1 max-w-7xl mx-auto w-full relative">
                 <main className="max-w-3xl mx-auto w-full p-6 md:p-10 space-y-8">
-                    {(viewMode !== 'feed' || selectedDepartment !== "Tümü") && (<button onClick={handleGoHome} className="group flex items-center gap-3 text-slate-400 hover:text-white mb-6 transition-all font-bold text-sm bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full border border-white/10 backdrop-blur-md shadow-lg"><ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /><span>Ana Sayfaya Dön</span></button>)}
+                    {(viewMode !== 'feed' || selectedDepartment !== "Tümü") && (
+                        <button onClick={handleGoHome} className="group flex items-center gap-3 text-slate-400 hover:text-white mb-6 transition-all font-bold text-sm bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full border border-white/10 backdrop-blur-md shadow-lg">
+                            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /><span>Ana Sayfaya Dön</span>
+                        </button>
+                    )}
+
                     {viewMode === 'feed' && selectedDepartment === "Tümü" && (
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
@@ -428,27 +598,22 @@ export default function Dashboard() {
                                 <div className="flex-1 space-y-3">
                                     <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
                                     <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
-
                                     {imagePreview && (
                                         <div className="relative inline-block mt-2">
                                             <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20" />
                                             <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 border border-[#0a0f1d] hover:scale-110 transition-transform"><X size={12} /></button>
                                         </div>
                                     )}
-
                                     <div className="flex justify-between items-center pt-2">
                                         <div className="flex items-center gap-2">
-                                            {/* GALERİ BUTONU */}
                                             <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                                             <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
                                                 <Paperclip size={16} /> Fotoğraf Ekle
                                             </button>
-                                            {/* KAMERA BUTONU (YENİ) */}
                                             <button onClick={startCamera} className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
                                                 <Camera size={16} /> Kamera
                                             </button>
                                         </div>
-
                                         <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50">
                                             {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
                                         </button>
@@ -459,12 +624,29 @@ export default function Dashboard() {
                     )}
 
                     <div className="space-y-6 pb-24">
-                        <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2"><div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>{viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))}<span className="text-slate-600 ml-1">({displayContent.length})</span></h2>
+                        <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2">
+                            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
+                            {viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))}
+                            <span className="text-slate-600 ml-1">({displayContent.length})</span>
+                        </h2>
                         {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40} /> : displayContent.length > 0 ? (
                             displayContent.map(item => (
                                 viewMode === 'my_answers' ? (
                                     <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
-                                        <div className="flex justify-between items-start mb-3"><div className="flex-1"><span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span><h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>{item.question?.title || `Soru ID: #${item.question_id}`}</h4></div><span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span></div><div className="bg-black/20 p-4 rounded-xl border border-white/5 relative"><div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div><p className="text-slate-300 italic text-sm">"{item.content}"</p></div><div className="mt-4 pt-4 border-t border-white/5 flex justify-end"><button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12} /></button></div>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex-1">
+                                                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span>
+                                                <h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>{item.question?.title || `Soru ID: #${item.question_id}`}</h4>
+                                            </div>
+                                            <span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
+                                        </div>
+                                        <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative">
+                                            <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div>
+                                            <p className="text-slate-300 italic text-sm">"{item.content}"</p>
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
+                                            <button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12} /></button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group relative">
@@ -482,13 +664,11 @@ export default function Dashboard() {
                                         </div>
                                         <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
                                         <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
-
                                         {item.image_url && (
                                             <div className="mb-6 rounded-xl overflow-hidden border border-white/10" onClick={() => openQuestionModal(item)}>
                                                 <img src={`${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" />
                                             </div>
                                         )}
-
                                         <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
                                             <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10"><Maximize2 size={14} className="text-blue-400" /> İncele</button>
                                             <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2"><MessageCircle size={14} /> Cevapla</button>

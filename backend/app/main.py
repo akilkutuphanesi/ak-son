@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routers import auth_router, question_router, answer_router, notification_router
 from app.core.database import engine, Base
+from fastapi.staticfiles import StaticFiles
 import os
 
 # Veritabanı tablolarını oluştur
