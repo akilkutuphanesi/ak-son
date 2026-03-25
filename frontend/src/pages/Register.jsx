@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, Mail, Lock, User, ChevronDown, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { AlertTriangle, Mail, Lock, User, ChevronDown, ArrowRight, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
   const [searchParams] = useSearchParams();
@@ -10,8 +10,12 @@ export default function Register() {
   const [formData, setFormData] = useState({ name: '', surname: '', email: '', password: '', department: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); setError(null); };
+  const handleChange = (e) => { 
+    setFormData({ ...formData, [e.target.name]: e.target.value }); 
+    setError(null); 
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,8 +34,11 @@ export default function Register() {
       if (!response.ok) throw new Error(data.detail || "Kayıt işlemi başarısız oldu.");
       alert("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz... 🚀");
       navigate('/login');
-    } catch (err) { setError(err.message === "Failed to fetch" ? "Sunucuya bağlanılamadı!" : err.message); } 
-    finally { setIsLoading(false); }
+    } catch (err) { 
+        setError(err.message === "Failed to fetch" ? "Sunucuya bağlanılamadı!" : err.message); 
+    } finally { 
+        setIsLoading(false); 
+    }
   };
 
   return (
@@ -49,7 +56,6 @@ export default function Register() {
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div> 
           <div className="relative z-10 space-y-10 text-left">
             <div className="space-y-2">
-                {/* --- LOGO KISMI (PUBLIC KLASÖRÜNDEN) --- */}
                 <div className="bg-white/10 p-3 rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-6">
                     <img src="/logo.png" className="w-16 h-16 object-contain" alt="İSTE Logo" />
                 </div>
@@ -87,7 +93,27 @@ export default function Register() {
                     <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={20} />
                 </div>
                 <div className="relative group"><Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} /><input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="iste.edu.tr" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required /></div>
-                <div className="relative group"><Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} /><input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required /></div>
+                
+                <div className="relative group">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input 
+                        type={showPassword ? "text" : "password"} 
+                        name="password" 
+                        value={formData.password} 
+                        onChange={handleChange} 
+                        placeholder="••••••••" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" 
+                        required 
+                    />
+                    <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors focus:outline-none"
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
+
                 <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-2">{isLoading ? <><Loader2 className="animate-spin" size={20}/><span>Kaydediliyor...</span></> : <><span>{tableNumber ? 'Masaya Giriş Yap' : 'Kayıt Ol'}</span><ArrowRight size={20}/></>}</button>
             </form>
             <div className="mt-4 text-center"><p className="text-slate-500 text-sm">Zaten bir hesabın var mı? <Link to="/login" className="text-white font-bold hover:text-red-500 underline">Giriş Yap</Link></p></div>

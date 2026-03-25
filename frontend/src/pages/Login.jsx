@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, LogIn, ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, LogIn, ArrowLeft, Loader2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -8,6 +8,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Şifre göster/gizle state'i
+  const [showPassword, setShowPassword] = useState(false);
 
   // --- BURAYI GÜNCELLEDİK ---
   // Telefonunun bağlanması için IP adresini buraya yazıyoruz
@@ -68,8 +71,32 @@ export default function Login() {
             <div className="flex justify-between items-start mb-10"><div><h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">Giriş Yap <LogIn className="text-red-500" size={28} /></h2><p className="text-slate-400 text-sm">Kütüphane ağına bağlanmak için bilgilerinizi girin.</p></div></div>
             {error && <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2"><AlertTriangle size={16} />{error}</div>}
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="relative group"><Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Örn: isim.soyisim@iste.edu.tr" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required/></div>
-                <div className="relative group"><Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required/></div>
+                <div className="relative group">
+                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Örn: isim.soyisim@iste.edu.tr" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required/>
+                </div>
+                
+                {/* Şifre Inputu Başlangıcı */}
+                <div className="relative group">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                    <input 
+                        type={showPassword ? "text" : "password"} 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        placeholder="••••••••" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" 
+                        required
+                    />
+                    <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors focus:outline-none"
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
+                {/* Şifre Inputu Bitişi */}
+
                 <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl transition-all shadow-lg mt-4 disabled:opacity-50 flex justify-center items-center gap-2">{isLoading ? <><Loader2 className="animate-spin" size={20} /><span>Giriş...</span></> : <><span>Oturum Aç</span><ArrowRight size={20} /></>}</button>
             </form>
             <div className="mt-8 text-center"><p className="text-slate-500 text-sm">Hesabın yok mu? <Link to="/register" className="text-white font-bold hover:text-red-500 underline">Kaydol</Link></p></div>
