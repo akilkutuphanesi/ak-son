@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from app.models.question import Question
+from app.models.answer import Answer
+from app.models.notification import Notification # <-- Bildirim modelini de ekledik
 
 def get_all_questions(db: Session):
     return db.query(Question).options(joinedload(Question.owner)).order_by(Question.created_at.desc()).all()
@@ -10,7 +12,7 @@ def create_question(db: Session, question, user_id: int, image_url: str = None):
         title=question.title, 
         content=question.content, 
         owner_id=user_id,
-        image_url=image_url # <-- Kaydediyoruz
+        image_url=image_url
     )
     db.add(db_question)
     db.commit()
@@ -21,5 +23,14 @@ def get_question_by_id(db: Session, question_id: int):
     return db.query(Question).options(joinedload(Question.owner)).filter(Question.id == question_id).first()
 
 def delete_question(db: Session, question_id: int):
+    # 1. Önce bu soruya bağlı BİLDİRİMLERİ siliyoruz
+    db.query(Notification).filter(Notification.question_id == question_id).delete()
+    
+    # 2. Sonra bu soruya bağlı CEVAPLARI siliyoruz
+    db.query(Answer).filter(Answer.question_id == question_id).delete()
+    
+    # 3. Artık hiçbir bağı kalmayan SORUYU güvenle siliyoruz
     db.query(Question).filter(Question.id == question_id).delete()
+    
+    # 4. Değişiklikleri kaydediyoruz
     db.commit()

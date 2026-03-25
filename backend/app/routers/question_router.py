@@ -4,6 +4,8 @@ from typing import List, Optional
 import shutil
 import os
 import uuid 
+import cloudinary
+import cloudinary.uploader
 
 from app.core.database import get_db
 from app.schemas.question import QuestionResponse, QuestionCreate
@@ -14,6 +16,12 @@ from app.routers.auth_router import get_current_user
 # --- İŞTE BU SATIR EKSİK OLABİLİR, BUNU MUTLAKAEKLE ---
 router = APIRouter(prefix="/questions", tags=["Questions"])
 # ------------------------------------------------------
+# Cloudinary yapılandırmasını kuruyoruz (Bilgileri .env'den otomatik okuyacak)
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
 
 # --- RESİM YÜKLEME VE SORU OLUŞTURMA ---
 @router.post("/", response_model=QuestionResponse)
@@ -27,21 +35,12 @@ def create_question(
     image_url = None
     
     if image:
-        # Klasör yoksa oluştur
-        upload_dir = "uploads"
-        if not os.path.exists(upload_dir):
-            os.makedirs(upload_dir)
-            
-        # Dosya ismini benzersiz yap
-        file_extension = image.filename.split(".")[-1]
-        unique_filename = f"{uuid.uuid4()}.{file_extension}"
-        file_path = f"{upload_dir}/{unique_filename}"
+        # Resmi Cloudinary'e yükle (akil_kutuphanesi isimli bir klasör oluşturur)
+        result = cloudinary.uploader.upload(image.file, folder="akil_kutuphanesi")
         
-        # Dosyayı kaydet
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-            
-        image_url = f"/uploads/{unique_filename}"
+        # Cloudinary'nin bize verdiği o güvenli ve kalıcı linki al (https:// ile başlar)
+        image_url = result.get("secure_url")
+
 
     # Veriyi bir obje paketine koyuyoruz
     question_data = QuestionCreate(title=title, content=content)
