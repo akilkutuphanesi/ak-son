@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera } from 'lucide-react';
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -31,9 +31,9 @@ export default function Dashboard() {
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
 
-    const [isCameraOpen, setIsCameraOpen] = useState(false); // Kamera açık mı?
-    const videoRef = useRef(null); // Video elementini tutar
-    const canvasRef = useRef(null); // Fotoğrafı dondurmak için
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,23 +69,22 @@ export default function Dashboard() {
     }, []);
 
     // Geri tuşuna basıldığında eğer kamera açıksa kamerayı kapat, sayfadan çıkma
-useEffect(() => {
-    const handleBackButton = (e) => {
+    useEffect(() => {
+        const handleBackButton = (e) => {
+            if (isCameraOpen) {
+                e.preventDefault(); 
+                stopCamera();       
+                window.history.pushState(null, null, window.location.pathname);
+            }
+        };
+
         if (isCameraOpen) {
-            e.preventDefault(); // Sayfanın geri gitmesini engelle
-            stopCamera();       // Kamerayı kapat
-            // Tarayıcı geçmişine hayali bir durum ekleyerek sayfada tut
             window.history.pushState(null, null, window.location.pathname);
+            window.addEventListener('popstate', handleBackButton);
         }
-    };
 
-    if (isCameraOpen) {
-        window.history.pushState(null, null, window.location.pathname);
-        window.addEventListener('popstate', handleBackButton);
-    }
-
-    return () => window.removeEventListener('popstate', handleBackButton);
-}, [isCameraOpen]);
+        return () => window.removeEventListener('popstate', handleBackButton);
+    }, [isCameraOpen]);
 
     const fetchUserProfile = async (authToken) => {
         try {
@@ -128,7 +127,6 @@ useEffect(() => {
         } catch (error) { console.error(error); }
     };
 
-    // --- RESİM İŞLEMLERİ (GALERİ) ---
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -145,7 +143,6 @@ useEffect(() => {
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    // --- KAMERA İŞLEMLERİ ---
     const startCamera = async () => {
         setIsCameraOpen(true);
         try {
@@ -173,28 +170,22 @@ useEffect(() => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
         if (video && canvas) {
-            // Videoyu canvas'a çiz
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Canvas'ı Blob'a (Dosyaya) çevir
             canvas.toBlob(blob => {
                 const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
-                setNewImage(file); // Galeriden seçmiş gibi state'e atıyoruz
-
-                // Önizleme oluştur
+                setNewImage(file); 
                 const reader = new FileReader();
                 reader.onloadend = () => setImagePreview(reader.result);
                 reader.readAsDataURL(file);
-
-                stopCamera(); // Fotoğrafı çektikten sonra kamerayı kapat
+                stopCamera(); 
             }, 'image/jpeg');
         }
     };
 
-    // --- SORU YAYINLAMA ---
     const handleCreateQuestion = async () => {
         if (!newTitle.trim() || !newContent.trim()) { alert("Başlık ve içerik giriniz."); return; }
         setIsSubmitting(true);
@@ -289,6 +280,25 @@ useEffect(() => {
         }
     };
 
+    // --- TÜMÜNÜ OKUNDU İŞARETLE FONKSİYONU ---
+    const handleMarkAllAsRead = async (e) => {
+        e.stopPropagation();
+        
+        // 1. ADIM: EKRANDAN ANINDA SİL (Kullanıcıyı hiç bekletme)
+        setNotifications([]); 
+        setUnreadCount(0);
+
+        // 2. ADIM: ARKA PLANDA VERİTABANINA BİLDİR
+        try {
+            await fetch(`${API_BASE}/notifications/clear-all`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (error) { 
+            console.error("Bildirimler silinirken hata:", error); 
+        }
+    };
+
     const openQuestionModal = (question) => { if (!question) return; setSelectedQuestion(question); fetchAnswersForQuestion(question.id); };
     const closeQuestionModal = () => { setSelectedQuestion(null); setNewAnswer(""); };
 
@@ -312,44 +322,46 @@ useEffect(() => {
     const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
     const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
     const saveProfileSettings = () => { localStorage.setItem('custom_display_name', displayName); setIsSettingsOpen(false); alert("Profil güncellendi! ✅"); };
+    
     const handleChangePassword = async () => {
-    if (passwordData.new !== passwordData.confirm) {
-        alert("Yeni şifreler eşleşmiyor!");
-        return;
-    }
-    if (passwordData.new.length < 6) {
-        alert("Şifre en az 6 karakter olmalıdır!");
-        return;
-    }
-
-    setIsPasswordSubmitting(true);
-    try {
-        const response = await fetch(`${API_BASE}/auth/change-password`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({
-                old_password: passwordData.old,
-                new_password: passwordData.new
-            })
-        });
-
-        if (response.ok) {
-            alert("Şifre başarıyla değiştirildi! ✅");
-            setIsPasswordSectionOpen(false);
-            setPasswordData({ old: "", new: "", confirm: "" });
-        } else {
-            const err = await response.json();
-            alert(err.detail || "Bir hata oluştu.");
+        if (passwordData.new !== passwordData.confirm) {
+            alert("Yeni şifreler eşleşmiyor!");
+            return;
         }
-    } catch (error) {
-        alert("Sunucu bağlantı hatası!");
-    } finally {
-        setIsPasswordSubmitting(false);
-    }
-};
+        if (passwordData.new.length < 6) {
+            alert("Şifre en az 6 karakter olmalıdır!");
+            return;
+        }
+
+        setIsPasswordSubmitting(true);
+        try {
+            const response = await fetch(`${API_BASE}/auth/change-password`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    old_password: passwordData.old,
+                    new_password: passwordData.new
+                })
+            });
+
+            if (response.ok) {
+                alert("Şifre başarıyla değiştirildi! ✅");
+                setIsPasswordSectionOpen(false);
+                setPasswordData({ old: "", new: "", confirm: "" });
+            } else {
+                const err = await response.json();
+                alert(err.detail || "Bir hata oluştu.");
+            }
+        } catch (error) {
+            alert("Sunucu bağlantı hatası!");
+        } finally {
+            setIsPasswordSubmitting(false);
+        }
+    };
+
     const handleLogout = () => { localStorage.clear(); navigate('/login'); };
     const getInitial = (name) => name ? name.charAt(0).toUpperCase() : "?";
 
@@ -377,8 +389,34 @@ useEffect(() => {
                         </button>
                         {isNotificationsOpen && (
                             <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
-                                <div className="p-4 border-b border-white/5 bg-[#1a2035]"><h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3></div>
-                                <div className="max-h-96 overflow-y-auto custom-scrollbar">{notifications.length > 0 ? notifications.map(n => (<div key={n.id} onClick={() => handleNotificationClick(n)} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group flex gap-3"><div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0"><MessageSquare size={14} className="text-blue-400" /></div><div><p className="text-xs text-slate-300 leading-snug group-hover:text-white transition-colors">{n.content}</p><span className="text-[10px] text-slate-600 mt-1 block">{new Date(n.created_at).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })}</span></div></div>)) : <div className="py-12 text-center text-xs text-slate-500 italic">Henüz bildirim yok.</div>}</div>
+                                
+                                {/* --- GÜNCELLENEN BİLDİRİM BAŞLIĞI --- */}
+                                <div className="p-4 border-b border-white/5 bg-[#1a2035] flex justify-between items-center">
+                                    <h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3>
+                                    {notifications.length > 0 && (
+                                        <button 
+                                            onClick={handleMarkAllAsRead} 
+                                            className="text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1.5 rounded-lg border border-blue-500/20"
+                                        >
+                                            <CheckCheck size={14} /> Tümünü Okundu İşaretle
+                                        </button>
+                                    )}
+                                </div>
+                                {/* ----------------------------------- */}
+
+                                <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                                    {notifications.length > 0 ? notifications.map(n => (
+                                        <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group flex gap-3">
+                                            <div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0">
+                                                <MessageSquare size={14} className="text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-300 leading-snug group-hover:text-white transition-colors">{n.content}</p>
+                                                <span className="text-[10px] text-slate-600 mt-1 block">{new Date(n.created_at).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        </div>
+                                    )) : <div className="py-12 text-center text-xs text-slate-500 italic">Henüz bildirim yok.</div>}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -393,25 +431,20 @@ useEffect(() => {
                 </div>
             </nav>
 
-            {/* --- KAMERA MODALI (Yeni Eklendi) --- */}
+            {/* --- KAMERA MODALI --- */}
             {isCameraOpen && (
                 <div className="fixed inset-0 z-[110] bg-black/90 flex flex-col items-center justify-center">
                     <div className="relative w-full max-w-2xl bg-black rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
-                        {/* Video Akışı */}
                         <video ref={videoRef} autoPlay playsInline className="w-full h-[60vh] object-cover transform scale-x-[-1]"></video>
                         <canvas ref={canvasRef} className="hidden"></canvas>
-
-                        {/* Kontroller */}
                         <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/50 to-transparent flex justify-between items-center">
                             <button onClick={stopCamera} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
                                 <X size={24} />
                             </button>
-
                             <button onClick={capturePhoto} className="h-16 w-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-all group">
                                 <div className="h-12 w-12 bg-white rounded-full group-hover:bg-red-500 transition-colors"></div>
                             </button>
-
-                            <div className="w-12"></div> {/* Hizalama için boşluk */}
+                            <div className="w-12"></div>
                         </div>
                     </div>
                     <p className="text-slate-400 mt-4 text-sm animate-pulse">Fotoğrafı çekmek için butona bas</p>
