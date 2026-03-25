@@ -382,7 +382,7 @@ export default function Dashboard() {
                                 <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
                                 {selectedQuestion.image_url && (
                                     <div className="mt-4 rounded-xl overflow-hidden border border-white/10">
-                                        <img src={`${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full object-cover max-h-[400px]" />
+                                        <img src={selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full object-cover max-h-[400px]" />
                                     </div>
                                 )}
                             </div>
@@ -394,7 +394,7 @@ export default function Dashboard() {
                                             <div className="flex-shrink-0 flex flex-col items-center gap-2"><div className="h-8 w-8 bg-[#1f2937] rounded-full flex items-center justify-center text-xs font-bold text-slate-300 border border-white/10">{ans.owner ? getInitial(ans.owner.email) : "?"}</div><div className="w-px flex-1 bg-white/5"></div></div>
                                             <div className="flex-1 pb-4">
                                                 <div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg relative">
-                                                    {userProfile?.email === ans.owner?.email && (
+                                                    {(userProfile?.email === ans.owner?.email || userProfile?.email === selectedQuestion?.owner?.email) && (
                                                         <button onClick={() => handleDeleteAnswer(ans.id)} className="absolute top-2 right-2 text-slate-600 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-500/10 transition-all opacity-0 group-hover/answer:opacity-100">
                                                             {isDeletingAnswer === ans.id ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
                                                         </button>
@@ -485,7 +485,7 @@ export default function Dashboard() {
 
                                         {item.image_url && (
                                             <div className="mb-6 rounded-xl overflow-hidden border border-white/10" onClick={() => openQuestionModal(item)}>
-                                                <img src={`${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" />
+                                                <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" />
                                             </div>
                                         )}
 
