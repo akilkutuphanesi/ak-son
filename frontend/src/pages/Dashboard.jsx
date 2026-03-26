@@ -77,6 +77,9 @@ const avatarOptions = [
     const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
     const [fullScreenImage, setFullScreenImage] = useState(null);
 
+    // --- YENİ EKLENEN STATE: HESAP SİLME ---
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         const storedName = localStorage.getItem('custom_display_name');
@@ -380,6 +383,34 @@ const avatarOptions = [
             alert("Sunucu bağlantı hatası!");
         } finally {
             setIsPasswordSubmitting(false);
+        }
+    };
+
+    // --- YENİ EKLENEN FONKSİYON: HESAP SİLME ---
+    const handleDeleteAccount = async () => {
+        const isConfirmed = window.confirm("Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm verileriniz kalıcı olarak silinecektir!");
+        
+        if (!isConfirmed) return;
+
+        setIsDeletingAccount(true);
+        try {
+            const response = await fetch(`${API_BASE}/auth/delete-account`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                alert("Hesabınız başarıyla silindi. Hoşçakalın!");
+                localStorage.clear(); 
+                navigate('/register');
+            } else {
+                const err = await response.json();
+                alert(err.detail || "Hesap silinirken bir hata oluştu.");
+            }
+        } catch (error) {
+            alert("Sunucu bağlantı hatası!");
+        } finally {
+            setIsDeletingAccount(false);
         }
     };
 
@@ -699,6 +730,23 @@ const avatarOptions = [
                                         </button>
                                     </div>
                                 )}
+                            </div>
+
+                            {/* --- HESABI SİL BÖLÜMÜ --- */}
+                            <div className="pt-6 mt-4 border-t border-white/5">
+                                <button 
+                                    type="button"
+                                    onClick={handleDeleteAccount}
+                                    disabled={isDeletingAccount}
+                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:text-red-400 transition-colors group"
+                                >
+                                    {isDeletingAccount ? (
+                                        <Loader2 className="animate-spin" size={16} />
+                                    ) : (
+                                        <Trash2 size={16} className="group-hover:scale-110 transition-transform" />
+                                    )}
+                                    Hesabımı Kalıcı Olarak Sil
+                                </button>
                             </div>
                         </div>
 
