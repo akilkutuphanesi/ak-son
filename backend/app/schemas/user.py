@@ -15,9 +15,16 @@ class UserCreate(UserBase):
 # Kullanıcı Bilgisi Dönerken (Şifre YOK, ID var)
 class UserResponse(UserBase):
     id: int
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+# Profil Güncelleme İçin DTO
+class UserProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 # Token Dönüş Tipi
 class Token(BaseModel):
