@@ -20,3 +20,9 @@ def get_my_notifications(db: Session, user_id: int):
 def mark_all_as_read(db: Session, user_id: int):
     db.query(Notification).filter(Notification.user_id == user_id).update({"is_read": True})
     db.commit()
+
+# --- YENİ EKLENEN SİLME FONKSİYONU ---
+def delete_all_user_notifications(db: Session, user_id: int):
+    # Kullanıcıya ait tüm bildirimleri bul ve tamamen sil
+    db.query(Notification).filter(Notification.user_id == user_id).delete()
+    db.commit()

@@ -19,3 +19,9 @@ def get_my_notifications(db: Session = Depends(get_db), current_user: User = Dep
 def mark_notifications_as_read(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     notification_repo.mark_all_as_read(db, user_id=current_user.id)
     return {"message": "Tüm bildirimler okundu işaretlendi"}
+
+# --- YENİ EKLENEN SİLME ENDPOINT'İ ---
+@router.delete("/clear-all", status_code=status.HTTP_200_OK)
+def clear_all_notifications(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    notification_repo.delete_all_user_notifications(db, user_id=current_user.id)
+    return {"message": "Tüm bildirimler başarıyla silindi"}
