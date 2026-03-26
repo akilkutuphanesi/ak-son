@@ -41,7 +41,11 @@ def delete_answer(answer_id: int, db: Session = Depends(get_db), current_user: U
     answer = answer_repo.get_answer_by_id(db, answer_id)
     if not answer:
         raise HTTPException(status_code=404, detail="Cevap bulunamadı")
-    if answer.owner_id != current_user.id:
+        
+    question = question_repo.get_question_by_id(db, answer.question_id)
+    
+    if answer.owner_id != current_user.id and question.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Bu cevabı silmeye yetkiniz yok")
+        
     answer_repo.delete_answer(db, answer_id)
     return None
