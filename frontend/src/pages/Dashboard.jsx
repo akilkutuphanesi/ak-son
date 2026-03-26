@@ -121,7 +121,21 @@ const avatarOptions = [
             if (response.ok) {
                 const data = await response.json();
                 setUserProfile(data);
-                if (!localStorage.getItem('custom_display_name')) setDisplayName(data.email.split('@')[0]);
+                
+                // BACKEND'DEN GELEN VERIYI STATE'E AL
+                if (data.display_name) {
+                    setDisplayName(data.display_name);
+                } else if (!localStorage.getItem('custom_display_name')) {
+                    setDisplayName(data.email.split('@')[0]);
+                } else {
+                    setDisplayName(localStorage.getItem('custom_display_name'));
+                }
+
+                if (data.avatar_url) {
+                    setSelectedAvatarUrl(data.avatar_url);
+                } else if (localStorage.getItem('selected_avatar_url')) {
+                    setSelectedAvatarUrl(localStorage.getItem('selected_avatar_url'));
+                }
             }
         } catch (error) { console.error(error); }
     };
@@ -345,7 +359,18 @@ const avatarOptions = [
 
     const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
     const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
-    const saveProfileSettings = () => { localStorage.setItem('custom_display_name', displayName); setIsSettingsOpen(false); alert("Profil güncellendi! ✅"); };
+    const saveProfileSettings = async () => { 
+        try {
+            await fetch(`${API_BASE}/auth/me/profile`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ display_name: displayName })
+            });
+            localStorage.setItem('custom_display_name', displayName); 
+            setIsSettingsOpen(false); 
+            alert("Profil güncellendi! ✅"); 
+        } catch(e) { console.error(e); alert("Güncelleme hatası"); }
+    };
 
     const handleChangePassword = async () => {
         if (passwordData.new !== passwordData.confirm) {
@@ -526,11 +551,19 @@ const avatarOptions = [
                                 {avatarOptions.map((url, idx) => (
                                     <button
                                         key={idx}
-                                        onClick={() => {
+                                        onClick={async () => {
                                             setSelectedAvatarUrl(url);
                                             localStorage.setItem('selected_avatar_url', url);
                                             setIsAvatarPickerOpen(false);
                                             setIsProfileOpen(false);
+                                            
+                                            try {
+                                                await fetch(`${API_BASE}/auth/me/profile`, {
+                                                    method: 'PATCH',
+                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                                    body: JSON.stringify({ avatar_url: url })
+                                                });
+                                            } catch (e) { console.error("Avatar kaydı hatası", e); }
                                         }}
                                         className={`relative rounded-full border-4 transition-all duration-300 hover:scale-110 aspect-square overflow-hidden bg-[#0d1117] flex items-center justify-center ${selectedAvatarUrl === url ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-105' : 'border-transparent hover:border-white/20'}`}
                                     >
@@ -547,10 +580,18 @@ const avatarOptions = [
 
                         <div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-between items-center">
                             <button
-                                onClick={() => {
+                                onClick={async () => {
                                     setSelectedAvatarUrl(null);
                                     localStorage.removeItem('selected_avatar_url');
                                     setIsAvatarPickerOpen(false);
+                                    
+                                    try {
+                                        await fetch(`${API_BASE}/auth/me/profile`, {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                            body: JSON.stringify({ avatar_url: null })
+                                        });
+                                    } catch (e) { console.error("Avatar silme hatası", e); }
                                 }}
                                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors"
                             >

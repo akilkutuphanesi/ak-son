@@ -12,6 +12,10 @@ class User(Base):
     
     # YENİ EKLENEN SÜTUN:
     department = Column(String(100), nullable=True)
+    
+    # AVATAR VE İSİM (PERSISTENCE İÇİN)
+    display_name = Column(String(100), nullable=True)
+    avatar_url = Column(String(255), nullable=True)
 
     # İlişkiler
     questions = relationship("Question", back_populates="owner")

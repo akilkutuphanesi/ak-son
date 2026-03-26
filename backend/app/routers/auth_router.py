@@ -9,7 +9,7 @@ from typing import Optional
 from app.core.database import get_db
 from app.core.security import create_access_token, verify_password, get_password_hash, SECRET_KEY, ALGORITHM
 from app.repositories import user_repo
-from app.schemas.user import UserCreate, UserResponse, Token
+from app.schemas.user import UserCreate, UserResponse, Token, UserProfileUpdate
 from app.models.user import User
 
 # Silme işlemi için gereken modeller
@@ -74,6 +74,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 # 4. BEN KİMİM? (Profil Bilgisi İçin)
 @router.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+# 4.1. PROFİL BİLGİLERİNİ GÜNCELLEME (Avatar, İsim)
+@router.patch("/me/profile", response_model=UserResponse)
+def update_user_profile(
+    profile_data: UserProfileUpdate, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if profile_data.display_name is not None:
+        current_user.display_name = profile_data.display_name
+    if profile_data.avatar_url is not None:
+        current_user.avatar_url = profile_data.avatar_url
+        
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 # 5. ŞİFRE DEĞİŞTİRME
