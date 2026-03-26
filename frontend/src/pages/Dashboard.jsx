@@ -49,6 +49,7 @@ export default function Dashboard() {
     const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
     const [passwordData, setPasswordData] = useState({ old: "", new: "", confirm: "" });
     const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+    const [fullScreenImage, setFullScreenImage] = useState(null);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -442,8 +443,11 @@ useEffect(() => {
                                 <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
                                 <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
                                 {selectedQuestion.image_url && (
-                                    <div className="mt-4 rounded-xl overflow-hidden border border-white/10">
-                                        <img src={selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full object-cover max-h-[400px]" />
+                                    <div className="mt-4 rounded-xl overflow-hidden border border-white/10 flex justify-center bg-black/40 p-2 relative group/img cursor-pointer" onClick={() => setFullScreenImage(selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`)}>
+                                        <img src={selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full max-h-[300px] object-contain rounded-lg" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                                            <Maximize2 className="text-white drop-shadow-lg" size={32} />
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -665,8 +669,11 @@ useEffect(() => {
                                         <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
                                         <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
                                         {item.image_url && (
-                                            <div className="mb-6 rounded-xl overflow-hidden border border-white/10" onClick={() => openQuestionModal(item)}>
-                                                <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" />
+                                            <div className="relative mb-6 rounded-xl overflow-hidden border border-white/10 bg-black/20 flex justify-center group/img cursor-pointer" onClick={(e) => { e.stopPropagation(); setFullScreenImage(item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`); }}>
+                                                <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                    <Maximize2 className="text-white drop-shadow-lg" size={32} />
+                                                </div>
                                             </div>
                                         )}
                                         <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
@@ -680,6 +687,17 @@ useEffect(() => {
                     </div>
                 </main>
             </div>
+
+            {/* --- LIGHTBOX (TAM EKRAN GÖRSEL) --- */}
+            {fullScreenImage && (
+                <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setFullScreenImage(null)}>
+                    <button className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors p-2 rounded-full bg-white/5 hover:bg-red-500/20" onClick={() => setFullScreenImage(null)}>
+                        <X size={24} />
+                    </button>
+                    <img src={fullScreenImage} alt="Tam Boyut Soru" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl scale-100 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()} />
+                </div>
+            )}
+
         </div>
     );
 }
