@@ -133,13 +133,33 @@ export default function Welcome() {
         </div>
       </main>
 
-      {/* --- FOOTER --- */}
-      <div className="relative z-10 w-full text-center pb-6 mt-12 flex flex-col items-center gap-2">
-        <p className="text-slate-600 text-[10px] font-bold tracking-[0.4em] uppercase">
-            İSTE &copy; 2026
-        </p>
-      </div>
+{/* --- FOOTER --- (Geliştirilmiş Sihirli Kutu) */}
+      <div className="relative z-10 w-full text-center pb-12 mt-16 flex flex-col items-center gap-6">
+        
+        <div className="group relative flex items-center justify-center cursor-pointer h-12">
+          {/* Arkadaki Yanıp Sönen Dikkat Çekici Işık */}
+          <div className="absolute animate-ping w-24 h-8 rounded-full bg-red-500/30"></div>
+          
+          {/* Genişleyen Ana Kutu */}
+          <div className="relative z-10 flex items-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-full overflow-hidden transition-all duration-700 ease-out w-[120px] group-hover:w-[300px] h-12 shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]">
+             
+             {/* Başlangıçta Görünen Kısım (Harekete Geçirici Mesaj) */}
+             <span className="absolute inset-0 flex items-center justify-center text-sm font-bold tracking-widest text-white/90 group-hover:opacity-0 group-hover:-translate-y-4 transition-all duration-500">
+               <span className="animate-bounce mr-2">✨</span> Ekip
+             </span>
 
+             {/* Üzerine Gelince Kayarak Gelen İsimler */}
+             <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:translate-y-0 translate-y-4 whitespace-nowrap text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 transition-all duration-700 delay-100">
+               İrem • Nil • Berfin
+             </span>
+             
+          </div>
+        </div>
+
+        <p className="text-slate-600 text-[10px] font-bold tracking-[0.4em] uppercase">
+            İSTE &copy; 2026
+        </p>
+      </div>
     </div>
   );
 }
