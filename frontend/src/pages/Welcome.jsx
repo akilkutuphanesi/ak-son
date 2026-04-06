@@ -57,11 +57,11 @@ export default function Welcome() {
 
       {/* --- ANA İÇERİK (Hero Section) --- */}
       {/* ✅ FIX: px-4 ile mobilde kenarlara yapışmayı önle, overflow-hidden taşmaları engelle */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 mt-8 md:mt-0 max-w-5xl mx-auto w-full overflow-x-hidden">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 mt-8 md:mt-0 w-full max-w-7xl mx-auto overflow-x-hidden">
         
         {/* --- UÇUŞAN HEDEFLER (Sadece Masaüstünde) --- */}
         {/* ✅ FIX: Sadece lg: breakpoint'te göster - mobilde yatay taşma yapıyordu */}
-        <div className="hidden lg:flex absolute left-[-80px] top-[25%] animate-float items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 p-3 pr-6 rounded-full shadow-2xl">
+        <div className="hidden lg:flex absolute left-4 xl:left-8 top-[25%] animate-float items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 p-3 pr-6 rounded-full shadow-2xl">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-red-500/30">
                 <GraduationCap size={20} />
             </div>
@@ -71,7 +71,7 @@ export default function Welcome() {
             </div>
         </div>
 
-        <div className="hidden lg:flex absolute right-[-60px] top-[40%] animate-float-delayed items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 p-3 pr-6 rounded-full shadow-2xl">
+        <div className="hidden lg:flex absolute right-4 xl:right-8 top-[40%] animate-float-delayed items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 p-3 pr-6 rounded-full shadow-2xl">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                 <Lightbulb size={20} />
             </div>
