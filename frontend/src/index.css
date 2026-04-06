@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* ============================================
+   GLOBAL RESPONSIVE FIXES
+   Tüm sayfalarda yatay kaymayı engeller
+   ============================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  /* Mobilde adres çubuğu kaymasını önler */
+  width: 100%;
+}
+
+/* Taşan mutlak konumlu elementleri kısıtla */
+body > * {
+  overflow-x: hidden;
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);

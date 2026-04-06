@@ -465,7 +465,7 @@ const avatarOptions = [
                             <Bell size={20} />{unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0f1d] animate-bounce">{unreadCount}</span>}
                         </button>
                         {isNotificationsOpen && (
-                            <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                            <div className="absolute top-16 right-0 w-[90vw] max-w-xs md:w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
                                 <div className="p-4 border-b border-white/5 bg-[#1a2035] flex justify-between items-center">
                                     <h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3>
                                     {notifications.length > 0 && (
@@ -503,7 +503,7 @@ const avatarOptions = [
                         <ChevronDown size={16} className={`transition-transform duration-300 ${isProfileOpen ? 'rotate-180 text-red-500' : ''}`} />
                     </button>
                     {isProfileOpen && (
-                        <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                        <div className="absolute top-16 right-0 w-[90vw] max-w-xs md:w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
                             <div className="bg-gradient-to-r from-red-900/50 to-red-600/50 p-6 flex flex-col items-center border-b border-white/5 relative">
                                 <button
                                     onClick={() => setIsAvatarPickerOpen(true)}
@@ -803,9 +803,9 @@ const avatarOptions = [
 
             {/* --- ALT NAVİGASYON VE FİLTRE --- */}
             {viewMode === 'feed' && (
-                <div className="fixed bottom-8 left-8 z-40 flex flex-col items-start gap-4">
+                <div className="fixed bottom-6 left-4 z-40 flex flex-col items-start gap-4">
                     {isFilterOpen && (
-                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-80 max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
+                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-[min(320px,calc(100vw-2rem))] max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
                             <div className="flex justify-between items-center mb-4 px-2">
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12} /> Bölüm Filtrele</h2>
                                 <button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16} /></button>
@@ -853,17 +853,17 @@ const avatarOptions = [
                                             <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 border border-[#0a0f1d] hover:scale-110 transition-transform"><X size={12} /></button>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center pt-2">
-                                        <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap justify-between items-center gap-2 pt-2">
+                                        <div className="flex items-center gap-1 flex-wrap">
                                             <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
-                                            <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
-                                                <Paperclip size={16} /> Fotoğraf Ekle
+                                            <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
+                                                <Paperclip size={15} /> <span className="hidden sm:inline">Fotoğraf</span><span className="sm:hidden">Ekle</span>
                                             </button>
-                                            <button onClick={startCamera} className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
-                                                <Camera size={16} /> Kamera
+                                            <button onClick={startCamera} className="flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
+                                                <Camera size={15} /> Kamera
                                             </button>
                                         </div>
-                                        <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95">
+                                        <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95 flex-shrink-0">
                                             {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
                                         </button>
                                     </div>
@@ -905,13 +905,13 @@ const avatarOptions = [
                                             </button>
                                         )}
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative flex-shrink-0">
                                                     {item.owner?.email === userProfile?.email ? (
                                                         selectedAvatarUrl ? <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(displayName)
                                                     ) : (item.owner ? getInitial(item.owner.email) : "?")}
                                                 </div>
-                                                <div><h3 className="text-white font-bold text-sm leading-none flex items-center gap-2">{item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} />{item.owner?.department || "Genel"}</p></div>
+                                                <div className="min-w-0"><h3 className="text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap">{item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
                                             </div>
                                             <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                         </div>

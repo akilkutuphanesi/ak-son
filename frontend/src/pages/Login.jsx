@@ -50,30 +50,30 @@ export default function Login() {
         <ArrowLeft size={16} /> Ana Sayfa
       </Link>
 
-      <div className="relative z-10 w-full max-w-6xl grid md:grid-cols-12 bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative z-10 w-full max-w-6xl grid md:grid-cols-12 bg-white/5 backdrop-blur-xl rounded-3xl md:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
         {/* SOL PANEL */}
-        <div className="md:col-span-5 bg-gradient-to-br from-red-700/90 to-red-950 p-12 text-white flex flex-col justify-center relative overflow-hidden">
+        <div className="md:col-span-5 bg-gradient-to-br from-red-700/90 to-red-950 p-7 md:p-12 text-white flex flex-col justify-center relative overflow-hidden">
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="relative z-10 space-y-6 text-left">
-            <div className="bg-white/10 p-3 rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-4">
-              <img src="/logo.png" className="w-16 h-16 object-contain" alt="İSTE Logo" />
+          <div className="relative z-10 space-y-4 md:space-y-6 text-left">
+            <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-3 md:mb-4">
+              <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" />
             </div>
             <div>
-              <h1 className="text-6xl font-black tracking-tight leading-[0.9] mb-4">Akıl <br /> <span className="text-red-200">Kütüphanesi</span></h1>
-              <div className="w-16 h-1.5 bg-red-400/40 rounded-full mb-4"></div>
-              <p className="text-lg font-medium text-red-100/70 tracking-wide uppercase">İskenderun Teknİk Ünİversİtesİ</p>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] mb-3 md:mb-4">Akıl <br /> <span className="text-red-200">Kütüphanesi</span></h1>
+              <div className="w-12 md:w-16 h-1.5 bg-red-400/40 rounded-full mb-3 md:mb-4"></div>
+              <p className="text-sm md:text-lg font-medium text-red-100/70 tracking-wide uppercase">İskenderun Teknik Üniversitesi</p>
             </div>
           </div>
         </div>
 
         {/* SAĞ PANEL */}
-        <div className="md:col-span-7 bg-[#121826]/40 p-8 md:p-14 flex flex-col justify-center">
-          <div className="flex justify-between items-start mb-10">
+        <div className="md:col-span-7 bg-[#121826]/40 p-6 md:p-14 flex flex-col justify-center">
+          <div className="flex justify-between items-start mb-6 md:mb-10">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-                Giriş Yap <LogIn className="text-red-500" size={28} />
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 flex items-center gap-2 md:gap-3 flex-wrap">
+                Giriş Yap <LogIn className="text-red-500" size={24} />
               </h2>
-              <p className="text-slate-400 text-sm">Kütüphane ağına bağlanmak için bilgilerinizi girin.</p>
+              <p className="text-slate-400 text-xs md:text-sm">Kütüphane ağına bağlanmak için bilgilerinizi girin.</p>
             </div>
           </div>
 
@@ -111,7 +111,7 @@ export default function Login() {
               </Link>
             </div>
 
-            <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl transition-all shadow-lg mt-2 disabled:opacity-50 flex justify-center items-center gap-2">
+            <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 md:py-5 rounded-2xl transition-all shadow-lg mt-2 disabled:opacity-50 flex justify-center items-center gap-2">
               {isLoading ? (
                 <><Loader2 className="animate-spin" size={20} /><span>Giriş...</span></>
               ) : (
