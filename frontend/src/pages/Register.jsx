@@ -50,7 +50,8 @@ export default function Register() {
         body: JSON.stringify({ 
           email: formData.email, 
           password: formData.password, 
-          department: formData.department 
+          department: formData.department,
+          display_name: `${formData.name} ${formData.surname}`.trim()
         }),
       });
       
@@ -58,8 +59,8 @@ export default function Register() {
       
       if (!response.ok) throw new Error(data.detail || "Kayıt işlemi başarısız oldu.");
       
-      alert("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz... 🚀");
-      navigate('/login');
+      toast.success("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz... 🚀");
+      setTimeout(() => navigate('/login'), 2000);
       
     } catch (err) {
       setError(err.message === "Failed to fetch" ? "Sunucuya bağlanılamadı!" : err.message);

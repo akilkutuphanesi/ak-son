@@ -18,6 +18,12 @@ def get_answers_by_owner(db: Session, user_id: int):
 def get_answer_by_id(db: Session, answer_id: int):
     return db.query(Answer).filter(Answer.id == answer_id).first()
 
+def update_answer(db: Session, db_answer: Answer, update_data):
+    db_answer.content = update_data.content
+    db.commit()
+    db.refresh(db_answer)
+    return db_answer
+
 def delete_answer(db: Session, answer_id: int):
     db.query(Answer).filter(Answer.id == answer_id).delete()
     db.commit()

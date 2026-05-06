@@ -17,3 +17,12 @@ class Question(Base):
 
     owner = relationship("User", back_populates="questions")
     answers = relationship("Answer", back_populates="question")
+    favorites = relationship("Favorite", back_populates="question")
+
+    @property
+    def answer_count(self):
+        return len(self.answers) if self.answers else 0
+
+    @property
+    def favorite_count(self):
+        return len(self.favorites) if self.favorites else 0

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.core.database import get_db
-from app.core.security import create_access_token, verify_password, get_password_hash, SECRET_KEY, ALGORITHM
+from app.core.security import create_access_token, verify_password, get_password_hash, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.repositories import user_repo
 from app.schemas.user import UserCreate, UserResponse, Token, UserProfileUpdate
 from app.models.user import User
@@ -16,6 +16,7 @@ from app.models.user import User
 from app.models.question import Question
 from app.models.answer import Answer
 from app.models.notification import Notification
+from app.models.favorite import Favorite
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -24,6 +25,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
 
 # 1. KAYIT OLMA
 @router.post("/register", response_model=UserResponse)
@@ -44,7 +48,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token_expires = timedelta(minutes=1440) # 24 Saatlik token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES) # Token süresi security.py'den alınır
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
@@ -125,9 +129,10 @@ def delete_my_account(db: Session = Depends(get_db), current_user: User = Depend
             db.query(Answer).filter(Answer.question_id == q.id).delete(synchronize_session=False)
             db.delete(q) # Sorunun kendisini sil
         
-        # 3. Kullanıcının yaptığı diğer tüm yorumları ve bildirimleri sil
+        # 3. Kullanıcının yaptığı diğer tüm yorumları, bildirimleri ve favorileri sil
         db.query(Answer).filter(Answer.owner_id == current_user.id).delete(synchronize_session=False)
         db.query(Notification).filter(Notification.user_id == current_user.id).delete(synchronize_session=False)
+        db.query(Favorite).filter(Favorite.user_id == current_user.id).delete(synchronize_session=False)
         
         # 4. Son olarak kullanıcının kendisini sil
         db.delete(current_user)
@@ -138,3 +143,15 @@ def delete_my_account(db: Session = Depends(get_db), current_user: User = Depend
         db.rollback()
         print(f"Hata oluştu: {str(e)}") # Terminalde hatayı görmek için
         raise HTTPException(status_code=500, detail="Hesap silinirken bir hata oluştu. Sunucu loglarına bakın.")
+
+# 7. ŞİFREMİ UNUTTUM (Simülasyon)
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = user_repo.get_user_by_email(db, email=request.email)
+    if not user:
+        # Güvenlik gereği email sistemde olmasa bile aynı mesajı döneriz (Email Enumeration'ı engellemek için) ama bu eğitim projesi, doğrudan mesaj verebiliriz.
+        raise HTTPException(status_code=404, detail="Bu e-posta adresi ile kayıtlı bir hesap bulunamadı.")
+    
+    # Normalde burada kullanıcıya SMTP ile bir şifre sıfırlama linki/kodu gönderilir.
+    # Biz frontend'e başarılı mesajı dönüyoruz.
+    return {"message": "Şifre sıfırlama bağlantısı gönderildi"}

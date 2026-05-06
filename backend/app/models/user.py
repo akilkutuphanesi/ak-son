@@ -20,5 +20,5 @@ class User(Base):
     # İlişkiler
     questions = relationship("Question", back_populates="owner")
     answers = relationship("Answer", back_populates="owner")
-
-    notifications = relationship("Notification", back_populates="owner")
+    notifications = relationship("Notification", back_populates="user")
+    favorites = relationship("Favorite", back_populates="user")

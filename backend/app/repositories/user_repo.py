@@ -6,15 +6,19 @@ from app.core.security import get_password_hash
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id).first()
+
 def create_user(db: Session, user: UserCreate):
     # Şifreyi şifrele
     hashed_password = get_password_hash(user.password)
     
-    # Kullanıcıyı oluştur (Department ile birlikte)
+    # Kullanıcıyı oluştur (Department ve Display Name ile birlikte)
     db_user = User(
         email=user.email, 
         hashed_password=hashed_password,
-        department=user.department,  # <-- BURASI EKLENDİ
+        department=user.department,
+        display_name=user.display_name,
         is_active=True
     )
     

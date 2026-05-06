@@ -3,8 +3,8 @@ import Welcome from './pages/Welcome';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import MyQuestions from './pages/MyQuestions';
-import ProfileSettings from './pages/ProfileSettings';
+
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -15,11 +15,9 @@ function App() {
         
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         
-        {/* Yeni oluşturduğumuz yan sayfalar */}
-        <Route path="/questions" element={<MyQuestions />} />
-        <Route path="/profile" element={<ProfileSettings />} />
       </Routes>
     </Router>
   );

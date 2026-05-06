@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck } from 'lucide-react';
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-
+import UserModal from '../components/UserModal';
+import AvatarPickerModal from '../components/AvatarPickerModal';
+import CameraModal from '../components/CameraModal';
+import SettingsModal from '../components/SettingsModal';
+import QuestionDetailModal from '../components/QuestionDetailModal';
+import toast, { Toaster } from 'react-hot-toast';
+import Swal from 'sweetalert2';
 export default function Dashboard() {
     const navigate = useNavigate();
     const API_BASE = import.meta.env.VITE_API_URL;
@@ -44,6 +50,14 @@ export default function Dashboard() {
     const [isDeletingQuestion, setIsDeletingQuestion] = useState(null);
     const [isDeletingAnswer, setIsDeletingAnswer] = useState(null);
 
+    // --- DÜZENLEME STATE'LERİ ---
+    const [editingQuestion, setEditingQuestion] = useState(null);
+    const [editQuestionTitle, setEditQuestionTitle] = useState("");
+    const [editQuestionContent, setEditQuestionContent] = useState("");
+
+    const [editingAnswerId, setEditingAnswerId] = useState(null);
+    const [editAnswerContent, setEditAnswerContent] = useState("");
+
     // --- AVATAR SEÇİM STATE'LERİ VE GÖRSELLERİ ---
     const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
     const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(localStorage.getItem('selected_avatar_url') || null);
@@ -52,24 +66,24 @@ export default function Dashboard() {
     // --- %100 ÇALIŞAN GARANTİLİ AVATARLAR (Yerel AI PNG + DiceBear API) ---
     // --- %100 UYUMLU, 3D VE TEK TİP AVATARLAR (DiceBear Not-Avataaars & Notion Style) ---
     // --- %100 ÇALIŞAN, 3D GÖRÜNÜMLÜ VE TUTARLI AVATAR SETİ ---
-const avatarOptions = [
-    // Bilgisayar (Modern/Gözlüklü)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4", 
-    // Denizcilik (Mavi/Koyu Tema)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=003566", 
-    // İnşaat/Mimarlık (Toprak Tonları)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Caleb&backgroundColor=ffc300", 
-    // Gastronomi (Sıcak Tonlar)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Aria&backgroundColor=fbcfe8", 
-    // Elektrik/Elektronik (Parlak/Enerjik)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Max&backgroundColor=ffea00", 
-    // Ekonomi/Lojistik (Ciddi/Gri)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Jack&backgroundColor=d1d8e0", 
-    // Havacılık (Gökyüzü)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=82ccdd",
-    // İSTE Genel (Kırmızı)
-    "https://api.dicebear.com/7.x/adventurer/svg?seed=Milo&backgroundColor=e63946"
-];
+    const avatarOptions = [
+        // Bilgisayar (Modern/Gözlüklü)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4",
+        // Denizcilik (Mavi/Koyu Tema)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=003566",
+        // İnşaat/Mimarlık (Toprak Tonları)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Caleb&backgroundColor=ffc300",
+        // Gastronomi (Sıcak Tonlar)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Aria&backgroundColor=fbcfe8",
+        // Elektrik/Elektronik (Parlak/Enerjik)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Max&backgroundColor=ffea00",
+        // Ekonomi/Lojistik (Ciddi/Gri)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Jack&backgroundColor=d1d8e0",
+        // Havacılık (Gökyüzü)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=82ccdd",
+        // İSTE Genel (Kırmızı)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Milo&backgroundColor=e63946"
+    ];
     const departments = ["Tümü", "Bilgisayar Mühendisliği", "Biyomedikal Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", "Denizcilik İşletmeleri Yönetimi", "Ekonomi", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", "Gastronomi ve Mutfak Sanatları", "Gemi İnşaatı ve Gemi Makineleri Mühendisliği", "Havacılık Elektrik ve Elektroniği", "Havacılık ve Uzay Mühendisliği", "Havacılık Yönetimi", "İç Mimarlık", "İnşaat Mühendisliği", "Lojistik Yönetimi"];
 
     const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
@@ -79,6 +93,11 @@ const avatarOptions = [
 
     // --- YENİ EKLENEN STATE: HESAP SİLME ---
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+    // --- FAVORİ VE KULLANICI PROFİLİ STATE'LERİ ---
+    const [favoritedIds, setFavoritedIds] = useState(new Set());
+    const [viewedUser, setViewedUser] = useState(null);
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -93,6 +112,7 @@ const avatarOptions = [
                 await fetchQuestions(storedToken);
                 await fetchNotifications(storedToken);
                 await fetchMyAnswers(storedToken);
+                await fetchMyFavorites(storedToken);
             } catch (e) { console.error(e); }
         };
         initData();
@@ -121,7 +141,7 @@ const avatarOptions = [
             if (response.ok) {
                 const data = await response.json();
                 setUserProfile(data);
-                
+
                 // BACKEND'DEN GELEN VERIYI STATE'E AL
                 if (data.display_name) {
                     setDisplayName(data.display_name);
@@ -170,6 +190,51 @@ const avatarOptions = [
         } catch (error) { console.error(error); }
     };
 
+    // --- FAVORİ FONKSİYONLARI ---
+    const fetchMyFavorites = async (authToken = token) => {
+        try {
+            const response = await fetch(`${API_BASE}/favorites/me`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                const ids = new Set(data.filter(f => f.question_id).map(f => f.question_id));
+                setFavoritedIds(ids);
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    const handleToggleFavorite = async (questionId, e) => {
+        e.stopPropagation();
+        try {
+            const response = await fetch(`${API_BASE}/favorites/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ question_id: questionId })
+            });
+            if (response.ok) {
+                setFavoritedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(questionId)) { next.delete(questionId); }
+                    else { next.add(questionId); }
+                    return next;
+                });
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    // --- KULLANICI PROFİLİ MODAL ---
+    const openUserProfile = async (userId, e) => {
+        if (e) e.stopPropagation();
+        if (!userId || userId === userProfile?.id) return;
+        try {
+            const res = await fetch(`${API_BASE}/users/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                setViewedUser(data);
+                setIsUserModalOpen(true);
+            }
+        } catch (error) { console.error(error); }
+    };
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -195,7 +260,7 @@ const avatarOptions = [
             }
         } catch (err) {
             console.error("Kamera hatası:", err);
-            alert("Kameraya erişilemedi. İzinleri kontrol edin.");
+            toast.error("Kameraya erişilemedi. İzinleri kontrol edin.");
             setIsCameraOpen(false);
         }
     };
@@ -230,7 +295,7 @@ const avatarOptions = [
     };
 
     const handleCreateQuestion = async () => {
-        if (!newTitle.trim() || !newContent.trim()) { alert("Başlık ve içerik giriniz."); return; }
+        if (!newTitle.trim() || !newContent.trim()) { toast.error("Başlık ve içerik giriniz."); return; }
         setIsSubmitting(true);
 
         try {
@@ -251,27 +316,55 @@ const avatarOptions = [
                 setNewTitle(""); setNewContent(""); removeImage();
                 fetchQuestions(token);
                 setViewMode('feed');
-            } else { alert("Hata oluştu."); }
-        } catch (error) { alert("Sunucu bağlantı hatası!"); }
+                toast.success("Sorunuz yayınlandı!");
+            } else { toast.error("Hata oluştu."); }
+        } catch (error) { toast.error("Sunucu bağlantı hatası!"); }
         finally { setIsSubmitting(false); }
     };
 
     const handleDeleteQuestion = async (questionId, e = null) => {
         if (e) e.stopPropagation();
-        if (!window.confirm("Bu soruyu silmek istediğine emin misin?")) return;
+        const result = await Swal.fire({
+            title: 'Emin misin?',
+            text: "Bu soruyu silmek istediğine emin misin?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Evet, sil',
+            cancelButtonText: 'İptal',
+            background: '#161b2c',
+            color: '#fff'
+        });
+        if (!result.isConfirmed) return;
+
         setIsDeletingQuestion(questionId);
         try {
             const response = await fetch(`${API_BASE}/questions/${questionId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 setQuestions(prev => prev.filter(q => q.id !== questionId));
                 if (selectedQuestion?.id === questionId) setSelectedQuestion(null);
-            } else { alert("Silinemedi."); }
-        } catch (error) { alert("Hata oluştu."); }
+                toast.success("Soru başarıyla silindi.");
+            } else { toast.error("Silinemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
         finally { setIsDeletingQuestion(null); }
     };
 
     const handleDeleteAnswer = async (answerId) => {
-        if (!window.confirm("Bu cevabı silmek istediğine emin misin?")) return;
+        const result = await Swal.fire({
+            title: 'Emin misin?',
+            text: "Bu cevabı silmek istediğine emin misin?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Evet, sil',
+            cancelButtonText: 'İptal',
+            background: '#161b2c',
+            color: '#fff'
+        });
+        if (!result.isConfirmed) return;
+
         setIsDeletingAnswer(answerId);
         try {
             const response = await fetch(`${API_BASE}/answers/${answerId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
@@ -280,9 +373,46 @@ const avatarOptions = [
                     setQuestionAnswers(prev => ({ ...prev, [selectedQuestion.id]: prev[selectedQuestion.id].filter(a => a.id !== answerId) }));
                 }
                 fetchMyAnswers(token);
-            } else { alert("Cevap silinemedi."); }
-        } catch (error) { alert("Hata oluştu."); }
+                toast.success("Cevap silindi.");
+            } else { toast.error("Cevap silinemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
         finally { setIsDeletingAnswer(null); }
+    };
+
+    const handleUpdateQuestion = async (questionId) => {
+        if (!editQuestionTitle.trim() || !editQuestionContent.trim()) return;
+        try {
+            const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title: editQuestionTitle, content: editQuestionContent })
+            });
+            if (response.ok) {
+                setEditingQuestion(null);
+                fetchQuestions(token);
+                if (selectedQuestion?.id === questionId) {
+                    setSelectedQuestion(prev => ({ ...prev, title: editQuestionTitle, content: editQuestionContent }));
+                }
+                toast.success("Soru güncellendi.");
+            } else { toast.error("Soru güncellenemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
+    };
+
+    const handleUpdateAnswer = async (answerId, questionId) => {
+        if (!editAnswerContent.trim()) return;
+        try {
+            const response = await fetch(`${API_BASE}/answers/${answerId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ content: editAnswerContent })
+            });
+            if (response.ok) {
+                setEditingAnswerId(null);
+                fetchAnswersForQuestion(questionId);
+                fetchMyAnswers(token);
+                toast.success("Cevap güncellendi.");
+            } else { toast.error("Cevap güncellenemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
     };
 
     const handleSendAnswer = async (questionId) => {
@@ -298,11 +428,12 @@ const avatarOptions = [
                 setNewAnswer("");
                 fetchAnswersForQuestion(questionId);
                 fetchMyAnswers(token);
+                toast.success("Cevabınız gönderildi.");
             } else {
                 const errData = await response.json();
-                alert("Cevap gönderilemedi: " + (errData.detail || "Bilinmeyen hata"));
+                toast.error("Cevap gönderilemedi: " + (errData.detail || "Bilinmeyen hata"));
             }
-        } catch (error) { alert("Sunucu hatası"); }
+        } catch (error) { toast.error("Sunucu hatası"); }
         finally { setIsAnswerSubmitting(false); }
     };
 
@@ -332,8 +463,10 @@ const avatarOptions = [
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            toast.success("Tüm bildirimler temizlendi.");
         } catch (error) {
             console.error("Bildirimler silinirken hata:", error);
+            toast.error("Bildirimler silinemedi.");
         }
     };
 
@@ -351,7 +484,7 @@ const avatarOptions = [
                 try {
                     const response = await fetch(`${API_BASE}/questions/${n.question_id}`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (response.ok) { const questionData = await response.json(); openQuestionModal(questionData); }
-                    else { alert("Bu soru silinmiş veya ulaşılamıyor."); }
+                    else { toast.error("Bu soru silinmiş veya ulaşılamıyor."); }
                 } catch (error) { console.error(error); } finally { setIsLoading(false); }
             }
         }
@@ -359,26 +492,27 @@ const avatarOptions = [
 
     const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
     const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
-    const saveProfileSettings = async () => { 
+
+    const saveProfileSettings = async () => {
         try {
             await fetch(`${API_BASE}/auth/me/profile`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ display_name: displayName })
             });
-            localStorage.setItem('custom_display_name', displayName); 
-            setIsSettingsOpen(false); 
-            alert("Profil güncellendi! ✅"); 
-        } catch(e) { console.error(e); alert("Güncelleme hatası"); }
+            localStorage.setItem('custom_display_name', displayName);
+            setIsSettingsOpen(false);
+            toast.success("Profil güncellendi! ✅");
+        } catch (e) { console.error(e); toast.error("Güncelleme hatası"); }
     };
 
     const handleChangePassword = async () => {
         if (passwordData.new !== passwordData.confirm) {
-            alert("Yeni şifreler eşleşmiyor!");
+            toast.error("Yeni şifreler eşleşmiyor!");
             return;
         }
         if (passwordData.new.length < 6) {
-            alert("Şifre en az 6 karakter olmalıdır!");
+            toast.error("Şifre en az 6 karakter olmalıdır!");
             return;
         }
 
@@ -397,15 +531,15 @@ const avatarOptions = [
             });
 
             if (response.ok) {
-                alert("Şifre başarıyla değiştirildi! ✅");
+                toast.success("Şifre başarıyla değiştirildi! ✅");
                 setIsPasswordSectionOpen(false);
                 setPasswordData({ old: "", new: "", confirm: "" });
             } else {
                 const err = await response.json();
-                alert(err.detail || "Bir hata oluştu.");
+                toast.error(err.detail || "Bir hata oluştu.");
             }
         } catch (error) {
-            alert("Sunucu bağlantı hatası!");
+            toast.error("Sunucu bağlantı hatası!");
         } finally {
             setIsPasswordSubmitting(false);
         }
@@ -413,9 +547,19 @@ const avatarOptions = [
 
     // --- YENİ EKLENEN FONKSİYON: HESAP SİLME ---
     const handleDeleteAccount = async () => {
-        const isConfirmed = window.confirm("Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm verileriniz kalıcı olarak silinecektir!");
-        
-        if (!isConfirmed) return;
+        const result = await Swal.fire({
+            title: 'Hesabını Silmek Üzeresin!',
+            text: "Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm verileriniz kalıcı olarak silinecektir!",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Evet, hesabımı sil',
+            cancelButtonText: 'İptal',
+            background: '#161b2c',
+            color: '#fff'
+        });
+        if (!result.isConfirmed) return;
 
         setIsDeletingAccount(true);
         try {
@@ -425,15 +569,15 @@ const avatarOptions = [
             });
 
             if (response.ok) {
-                alert("Hesabınız başarıyla silindi. Hoşçakalın!");
-                localStorage.clear(); 
+                toast.success("Hesabınız başarıyla silindi. Hoşçakalın!");
+                localStorage.clear();
                 navigate('/register');
             } else {
                 const err = await response.json();
-                alert(err.detail || "Hesap silinirken bir hata oluştu.");
+                toast.error(err.detail || "Hesap silinirken bir hata oluştu.");
             }
         } catch (error) {
-            alert("Sunucu bağlantı hatası!");
+            toast.error("Sunucu bağlantı hatası!");
         } finally {
             setIsDeletingAccount(false);
         }
@@ -443,9 +587,11 @@ const avatarOptions = [
     const getInitial = (name) => name ? name.charAt(0).toUpperCase() : "?";
 
     const myQuestions = questions.filter(q => q.owner?.email === userProfile?.email);
+    const myFavoriteQuestions = questions.filter(q => favoritedIds.has(q.id));
     let displayContent;
     if (viewMode === 'my_questions') { displayContent = myQuestions; }
     else if (viewMode === 'my_answers') { displayContent = myAnswers; }
+    else if (viewMode === 'favorites') { displayContent = myFavoriteQuestions; }
     else { displayContent = selectedDepartment === "Tümü" ? questions : questions.filter(q => q.owner?.department === selectedDepartment); }
 
     return (
@@ -465,7 +611,9 @@ const avatarOptions = [
                             <Bell size={20} />{unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0f1d] animate-bounce">{unreadCount}</span>}
                         </button>
                         {isNotificationsOpen && (
-                            <div className="absolute top-16 right-0 w-[90vw] max-w-xs md:w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                            <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+
+                                {/* --- GÜNCELLENEN BİLDİRİM BAŞLIĞI --- */}
                                 <div className="p-4 border-b border-white/5 bg-[#1a2035] flex justify-between items-center">
                                     <h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3>
                                     {notifications.length > 0 && (
@@ -525,281 +673,113 @@ const avatarOptions = [
                                 <span className="text-xs text-red-200 bg-black/20 px-3 py-1 rounded-full mt-1 backdrop-blur-sm truncate max-w-[200px]">{userProfile?.department || "Bölüm Yok"}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-px bg-white/5 border-b border-white/5"><button onClick={() => { setViewMode('my_questions'); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myQuestions.length}</span><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Sorularım</span></button><button onClick={() => { setViewMode('my_answers'); fetchMyAnswers(); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myAnswers.length}</span><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Cevaplarım</span></button></div>
-                            <div className="p-2 space-y-1"><button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group"><Settings size={16} className="text-blue-400" /> Profil Ayarları</button><button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><LogOut size={16} className="text-red-400" /> Çıkış Yap</button></div>
+                            <div className="p-2 space-y-1"><button onClick={() => { setViewMode('favorites'); fetchMyFavorites(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><Heart size={16} className="text-red-400" /> Favorilerim <span className="ml-auto text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full">{myFavoriteQuestions.length}</span></button><button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group"><Settings size={16} className="text-blue-400" /> Profil Ayarları</button><button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><LogOut size={16} className="text-red-400" /> Çıkış Yap</button></div>
                         </div>
                     )}
                 </div>
             </nav>
 
+
+            {/* --- KULLANICI PROFİL MODALI --- */}
+            <UserModal
+                isOpen={isUserModalOpen}
+                onClose={() => setIsUserModalOpen(false)}
+                viewedUser={viewedUser}
+            />
+
             {/* --- AVATAR SEÇİM MODALI --- */}
-            {isAvatarPickerOpen && (
-                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsAvatarPickerOpen(false)}>
-                    <div className="bg-[#161b2c] w-full max-w-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a2035]">
-                            <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                                <ImageIcon size={20} className="text-red-500" /> Profil Fotoğrafı Seç
-                            </h3>
-                            <button onClick={() => setIsAvatarPickerOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-6">
-                            <p className="text-sm text-slate-400 mb-6 text-center">Bölümünü en iyi yansıtan karakteri seç</p>
-
-                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-6 px-2">
-                                {avatarOptions.map((url, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={async () => {
-                                            setSelectedAvatarUrl(url);
-                                            localStorage.setItem('selected_avatar_url', url);
-                                            setIsAvatarPickerOpen(false);
-                                            setIsProfileOpen(false);
-                                            
-                                            try {
-                                                await fetch(`${API_BASE}/auth/me/profile`, {
-                                                    method: 'PATCH',
-                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                                    body: JSON.stringify({ avatar_url: url })
-                                                });
-                                            } catch (e) { console.error("Avatar kaydı hatası", e); }
-                                        }}
-                                        className={`relative rounded-full border-4 transition-all duration-300 hover:scale-110 aspect-square overflow-hidden bg-[#0d1117] flex items-center justify-center ${selectedAvatarUrl === url ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-105' : 'border-transparent hover:border-white/20'}`}
-                                    >
-                                        <img
-    src={url}
-    alt={`Avatar ${idx}`}
-    className="w-full h-full object-cover aspect-square rounded-full transition-transform duration-500 hover:scale-110"
-    loading="lazy"
-/>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-between items-center">
-                            <button
-                                onClick={async () => {
-                                    setSelectedAvatarUrl(null);
-                                    localStorage.removeItem('selected_avatar_url');
-                                    setIsAvatarPickerOpen(false);
-                                    
-                                    try {
-                                        await fetch(`${API_BASE}/auth/me/profile`, {
-                                            method: 'PATCH',
-                                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                            body: JSON.stringify({ avatar_url: null })
-                                        });
-                                    } catch (e) { console.error("Avatar silme hatası", e); }
-                                }}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors"
-                            >
-                                Fotoğrafı Kaldır
-                            </button>
-                            <button onClick={() => setIsAvatarPickerOpen(false)} className="px-6 py-2 rounded-xl text-sm font-bold bg-white/10 text-white hover:bg-white/20 transition-all">İptal</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AvatarPickerModal
+                isOpen={isAvatarPickerOpen}
+                onClose={() => setIsAvatarPickerOpen(false)}
+                avatarOptions={avatarOptions}
+                selectedAvatarUrl={selectedAvatarUrl}
+                onSelectAvatar={async (url) => {
+                    setSelectedAvatarUrl(url);
+                    localStorage.setItem('selected_avatar_url', url);
+                    setIsAvatarPickerOpen(false);
+                    setIsProfileOpen(false);
+                    try {
+                        await fetch(`${API_BASE}/auth/me/profile`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ avatar_url: url })
+                        });
+                    } catch (e) { console.error("Avatar kaydı hatası", e); }
+                }}
+                onRemoveAvatar={async () => {
+                    setSelectedAvatarUrl(null);
+                    localStorage.removeItem('selected_avatar_url');
+                    setIsAvatarPickerOpen(false);
+                    try {
+                        await fetch(`${API_BASE}/auth/me/profile`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ avatar_url: null })
+                        });
+                    } catch (e) { console.error("Avatar silme hatası", e); }
+                }}
+            />
 
             {/* --- KAMERA MODALI --- */}
-            {isCameraOpen && (
-                <div className="fixed inset-0 z-[110] bg-black/90 flex flex-col items-center justify-center">
-                    <div className="relative w-full max-w-2xl bg-black rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
-                        <video ref={videoRef} autoPlay playsInline className="w-full h-[60vh] object-cover transform scale-x-[-1]"></video>
-                        <canvas ref={canvasRef} className="hidden"></canvas>
-                        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/50 to-transparent flex justify-between items-center">
-                            <button onClick={stopCamera} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
-                                <X size={24} />
-                            </button>
-                            <button onClick={capturePhoto} className="h-16 w-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-all group">
-                                <div className="h-12 w-12 bg-white rounded-full group-hover:bg-red-500 transition-colors"></div>
-                            </button>
-                            <div className="w-12"></div>
-                        </div>
-                    </div>
-                    <p className="text-slate-400 mt-4 text-sm animate-pulse">Fotoğrafı çekmek için butona bas</p>
-                </div>
-            )}
+            <CameraModal
+                isOpen={isCameraOpen}
+                videoRef={videoRef}
+                canvasRef={canvasRef}
+                stopCamera={stopCamera}
+                capturePhoto={capturePhoto}
+            />
 
             {/* --- SORU DETAY MODALI --- */}
-            {selectedQuestion && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <MessageSquare size={16} className="text-red-500" /> Soru Detayı
-                            </h3>
-                            <div className="flex items-center gap-2">
-                                {userProfile?.email === selectedQuestion.owner?.email && (
-                                    <button onClick={() => handleDeleteQuestion(selectedQuestion.id)} className="bg-red-500/10 hover:bg-red-600 hover:text-white text-red-500 p-2 rounded-full transition-all">
-                                        {isDeletingQuestion === selectedQuestion.id ? <Loader2 className="animate-spin" size={20} /> : <Trash2 size={20} />}
-                                    </button>
-                                )}
-                                <button onClick={closeQuestionModal} className="bg-white/5 hover:bg-white/20 text-slate-400 hover:text-white p-2 rounded-full transition-all"><X size={20} /></button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg overflow-hidden">
-                                        {selectedQuestion.owner?.email === userProfile?.email && selectedAvatarUrl ? (
-                                            <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" />
-                                        ) : (
-                                            selectedQuestion.owner ? getInitial(selectedQuestion.owner.email) : "?"
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h1 className="text-white font-bold text-sm">{selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? selectedQuestion.owner.email.split('@')[0] : "Anonim")}</h1>
-                                        <span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span>
-                                    </div>
-                                </div>
-                                <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
-                                <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
-                                {selectedQuestion.image_url && (
-                                    <div className="mt-4 rounded-xl overflow-hidden border border-white/10 flex justify-center bg-black/40 p-2 relative group/img cursor-pointer" onClick={() => setFullScreenImage(selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`)}>
-                                        <img src={selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full max-h-[300px] object-contain rounded-lg" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
-                                            <Maximize2 className="text-white drop-shadow-lg" size={32} />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
-                            <div className="space-y-4">
-                                {questionAnswers[selectedQuestion.id]?.length > 0 ? (
-                                    questionAnswers[selectedQuestion.id].map(ans => (
-                                        <div key={ans.id} className="flex gap-4 group/answer">
-                                            <div className="flex-shrink-0 flex flex-col items-center gap-2">
-                                                <div className="h-8 w-8 bg-[#1f2937] rounded-full flex items-center justify-center text-xs font-bold text-slate-300 border border-white/10 overflow-hidden relative">
-                                                    {ans.owner?.email === userProfile?.email && selectedAvatarUrl ? (
-                                                        <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" />
-                                                    ) : (
-                                                        ans.owner ? getInitial(ans.owner.email) : "?"
-                                                    )}
-                                                </div>
-                                                <div className="w-px flex-1 bg-white/5"></div>
-                                            </div>
-                                            <div className="flex-1 pb-4">
-                                                <div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg relative">
-                                                    {(userProfile?.email === ans.owner?.email || userProfile?.email === selectedQuestion?.owner?.email) && (
-                                                        <button onClick={() => handleDeleteAnswer(ans.id)} className="absolute top-2 right-2 text-slate-600 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-500/10 transition-all opacity-0 group-hover/answer:opacity-100">
-                                                            {isDeletingAnswer === ans.id ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
-                                                        </button>
-                                                    )}
-                                                    <div className="flex justify-between items-center mb-2"><h4 className="text-xs font-bold text-red-400">{ans.owner?.email === userProfile?.email ? displayName : (ans.owner ? ans.owner.email.split('@')[0] : "Misafir")}</h4><span className="text-[10px] text-slate-600 pr-6">{new Date(ans.created_at).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })}</span></div>
-                                                    <p className="text-sm text-slate-300 leading-relaxed">{ans.content}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : <div className="text-center py-8 opacity-50 text-xs">Henüz cevap yok.</div>}
-                            </div>
-                        </div>
-                        <div className="p-4 border-t border-white/10 bg-[#0d1117] shrink-0"><div className="flex gap-3"><input type="text" value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)} placeholder="Cevap yaz..." className="flex-1 bg-[#161b2c] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500/50 shadow-inner" /><button onClick={() => handleSendAnswer(selectedQuestion.id)} disabled={isAnswerSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 rounded-xl font-bold flex items-center justify-center transition-all disabled:opacity-50">{isAnswerSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}</button></div></div>
-                    </div>
-                </div>
-            )}
+            <QuestionDetailModal
+                selectedQuestion={selectedQuestion}
+                closeQuestionModal={closeQuestionModal}
+                userProfile={userProfile}
+                displayName={displayName}
+                selectedAvatarUrl={selectedAvatarUrl}
+                getInitial={getInitial}
+                openUserProfile={openUserProfile}
+                editingQuestion={editingQuestion}
+                setEditingQuestion={setEditingQuestion}
+                editQuestionTitle={editQuestionTitle}
+                setEditQuestionTitle={setEditQuestionTitle}
+                editQuestionContent={editQuestionContent}
+                setEditQuestionContent={setEditQuestionContent}
+                handleUpdateQuestion={handleUpdateQuestion}
+                handleDeleteQuestion={handleDeleteQuestion}
+                isDeletingQuestion={isDeletingQuestion}
+                setFullScreenImage={setFullScreenImage}
+                API_BASE={API_BASE}
+                questionAnswers={questionAnswers}
+                editingAnswerId={editingAnswerId}
+                setEditingAnswerId={setEditingAnswerId}
+                editAnswerContent={editAnswerContent}
+                setEditAnswerContent={setEditAnswerContent}
+                handleUpdateAnswer={handleUpdateAnswer}
+                handleDeleteAnswer={handleDeleteAnswer}
+                isDeletingAnswer={isDeletingAnswer}
+                newAnswer={newAnswer}
+                setNewAnswer={setNewAnswer}
+                handleSendAnswer={handleSendAnswer}
+                isAnswerSubmitting={isAnswerSubmitting}
+            />
 
             {/* --- PROFİL AYARLARI MODALI --- */}
-            {isSettingsOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-[#161b2c] w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a2035]">
-                            <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                                <Settings size={20} className="text-red-500" /> Profil Ayarları
-                            </h3>
-                            <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Görünen İsim</label>
-                                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 transition-colors" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Bölüm</label>
-                                <div className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-slate-400 cursor-not-allowed flex items-center justify-between shadow-inner">
-                                    {userProfile?.department}<Info size={16} />
-                                </div>
-                            </div>
-
-                            <div className="pt-4 border-t border-white/5">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors"
-                                >
-                                    {isPasswordSectionOpen ? "Vazgeç" : "Şifre Değiştirmek İstiyorum"}
-                                </button>
-
-                                {isPasswordSectionOpen && (
-                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <input
-                                            type="password"
-                                            placeholder="Mevcut Şifre"
-                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50 shadow-inner"
-                                            value={passwordData.old}
-                                            onChange={(e) => setPasswordData({ ...passwordData, old: e.target.value })}
-                                        />
-                                        <input
-                                            type="password"
-                                            placeholder="Yeni Şifre"
-                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50 shadow-inner"
-                                            value={passwordData.new}
-                                            onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                                        />
-                                        <input
-                                            type="password"
-                                            placeholder="Yeni Şifre (Tekrar)"
-                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50 shadow-inner"
-                                            value={passwordData.confirm}
-                                            onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleChangePassword}
-                                            disabled={isPasswordSubmitting}
-                                            className="w-full py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-500/20 transition-all shadow-md active:scale-95 disabled:opacity-50"
-                                        >
-                                            {isPasswordSubmitting ? "İşleniyor..." : "Şifreyi Güncelle"}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* --- HESABI SİL BÖLÜMÜ --- */}
-                            <div className="pt-6 mt-4 border-t border-white/5">
-                                <button 
-                                    type="button"
-                                    onClick={handleDeleteAccount}
-                                    disabled={isDeletingAccount}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:text-red-400 transition-colors group"
-                                >
-                                    {isDeletingAccount ? (
-                                        <Loader2 className="animate-spin" size={16} />
-                                    ) : (
-                                        <Trash2 size={16} className="group-hover:scale-110 transition-transform" />
-                                    )}
-                                    Hesabımı Kalıcı Olarak Sil
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-end gap-3">
-                            <button onClick={() => setIsSettingsOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5">İptal</button>
-                            <button onClick={saveProfileSettings} className="px-6 py-3 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg flex items-center gap-2 active:scale-95 transition-all">
-                                <Save size={16} /> Kaydet
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                displayName={displayName}
+                setDisplayName={setDisplayName}
+                userProfile={userProfile}
+                isPasswordSectionOpen={isPasswordSectionOpen}
+                setIsPasswordSectionOpen={setIsPasswordSectionOpen}
+                passwordData={passwordData}
+                setPasswordData={setPasswordData}
+                handleChangePassword={handleChangePassword}
+                isPasswordSubmitting={isPasswordSubmitting}
+                handleDeleteAccount={handleDeleteAccount}
+                isDeletingAccount={isDeletingAccount}
+                saveProfileSettings={saveProfileSettings}
+            />
 
             {/* --- ALT NAVİGASYON VE FİLTRE --- */}
             {viewMode === 'feed' && (
@@ -875,7 +855,7 @@ const avatarOptions = [
                     <div className="space-y-6 pb-24">
                         <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2">
                             <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
-                            {viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))}
+                            {viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (viewMode === 'favorites' ? "❤️ Favorilerim" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment)))}
                             <span className="text-slate-600 ml-1">({displayContent.length})</span>
                         </h2>
                         {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40} /> : displayContent.length > 0 ? (
@@ -906,12 +886,16 @@ const avatarOptions = [
                                         )}
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative flex-shrink-0">
+                                                <div
+                                                    className={`h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative flex-shrink-0 ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:ring-2 hover:ring-red-500/50 transition-all' : ''}`}
+                                                    onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}
+                                                    title={item.owner?.email !== userProfile?.email ? 'Profili Görüntüle' : ''}
+                                                >
                                                     {item.owner?.email === userProfile?.email ? (
                                                         selectedAvatarUrl ? <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(displayName)
-                                                    ) : (item.owner ? getInitial(item.owner.email) : "?")}
+                                                    ) : (item.owner?.avatar_url ? <img src={item.owner.avatar_url} alt="Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(item.owner?.display_name || item.owner?.email || "?"))}
                                                 </div>
-                                                <div className="min-w-0"><h3 className="text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap">{item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
+                                                <div className="min-w-0"><h3 className={`text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:text-red-400 transition-colors' : ''}`} onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}>{item.owner?.email === userProfile?.email ? displayName : (item.owner ? (item.owner.display_name || item.owner.email.split('@')[0]) : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
                                             </div>
                                             <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                         </div>
@@ -926,8 +910,17 @@ const avatarOptions = [
                                             </div>
                                         )}
                                         <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
-                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors"><Maximize2 size={14} className="text-blue-400" /> İncele</button>
-                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all"><MessageCircle size={14} /> Cevapla</button>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                                                    <MessageCircle size={14} className="text-blue-400" />
+                                                    <span>{item.answer_count || 0}</span>
+                                                </button>
+                                                <button onClick={(e) => handleToggleFavorite(item.id, e)} className={`text-xs font-bold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg ${favoritedIds.has(item.id) ? 'text-red-500 bg-red-500/10' : 'text-slate-500 bg-white/5 hover:text-red-400 hover:bg-red-500/10'}`} title="Favorilere Ekle">
+                                                    <Heart size={14} fill={favoritedIds.has(item.id) ? 'currentColor' : 'none'} />
+                                                    <span>{item.favorite_count !== undefined ? (item.favorite_count + (favoritedIds.has(item.id) && !item.is_favorited ? 1 : (!favoritedIds.has(item.id) && item.is_favorited ? -1 : 0))) : 0}</span>
+                                                </button>
+                                            </div>
+                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all">İncele & Cevapla</button>
                                         </div>
                                     </div>
                                 )

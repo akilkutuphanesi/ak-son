@@ -1,0 +1,154 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Mail, ArrowLeft, ArrowRight, Loader2, AlertTriangle, CheckCircle2, KeyRound } from 'lucide-react';
+
+export default function ForgotPassword() {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Bir hata oluştu.');
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message === 'Failed to fetch' ? 'Sunucuya bağlanılamadı!' : err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen relative flex items-center justify-center font-sans p-4 bg-[#0a0f1d] selection:bg-red-500/30">
+      {/* Arkaplan efektleri */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-900/20 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]"></div>
+      </div>
+
+      {/* Geri dön butonu */}
+      <Link
+        to="/login"
+        className="absolute top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-bold uppercase shadow-lg backdrop-blur-md transition-all"
+      >
+        <ArrowLeft size={16} /> Giriş Yap
+      </Link>
+
+      <div className="relative z-10 w-full max-w-6xl grid md:grid-cols-12 bg-white/5 backdrop-blur-xl rounded-3xl md:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+        {/* SOL PANEL */}
+        <div className="md:col-span-5 bg-gradient-to-br from-red-700/90 to-red-950 p-7 md:p-12 text-white flex flex-col justify-center relative overflow-hidden">
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="relative z-10 space-y-4 md:space-y-6 text-left">
+            <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-3 md:mb-4">
+              <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" />
+            </div>
+            <div>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] mb-3 md:mb-4">
+                Akıl <br /> <span className="text-red-200">Kütüphanesi</span>
+              </h1>
+              <div className="w-12 md:w-16 h-1.5 bg-red-400/40 rounded-full mb-3 md:mb-4"></div>
+              <p className="text-sm md:text-lg font-medium text-red-100/70 tracking-wide uppercase">
+                İskenderun Teknik Üniversitesi
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* SAĞ PANEL */}
+        <div className="md:col-span-7 bg-[#121826]/40 p-6 md:p-14 flex flex-col justify-center">
+          <div className="flex justify-between items-start mb-6 md:mb-10">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 flex items-center gap-2 md:gap-3 flex-wrap">
+                Şifremi Unuttum <KeyRound className="text-red-500" size={24} />
+              </h2>
+              <p className="text-slate-400 text-xs md:text-sm">
+                Kayıtlı e-posta adresinizi girin, size sıfırlama bağlantısı gönderelim.
+              </p>
+            </div>
+          </div>
+
+          {/* Hata mesajı */}
+          {error && (
+            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+              <AlertTriangle size={16} /> {error}
+            </div>
+          )}
+
+          {/* Başarı mesajı */}
+          {success ? (
+            <div className="flex flex-col items-center text-center gap-4 py-8">
+              <div className="bg-green-500/10 p-5 rounded-full border border-green-500/20">
+                <CheckCircle2 size={48} className="text-green-400" />
+              </div>
+              <div>
+                <p className="text-white font-bold text-lg mb-1">İstek Alındı!</p>
+                <p className="text-slate-400 text-sm max-w-xs">
+                  Eğer <span className="text-white font-semibold">{email}</span> adresine kayıtlı bir hesap varsa, şifre sıfırlama bağlantısı gönderilmiştir.
+                </p>
+              </div>
+              <Link
+                to="/login"
+                className="mt-2 flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all text-sm"
+              >
+                <ArrowLeft size={16} /> Giriş sayfasına dön
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative group">
+                <Mail
+                  className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors"
+                  size={18}
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Örn: isim.soyisim@iste.edu.tr"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 md:py-5 rounded-2xl transition-all shadow-lg mt-2 disabled:opacity-50 flex justify-center items-center gap-2"
+              >
+                {isLoading ? (
+                  <><Loader2 className="animate-spin" size={20} /><span>Gönderiliyor...</span></>
+                ) : (
+                  <><span>Sıfırlama Bağlantısı Gönder</span><ArrowRight size={20} /></>
+                )}
+              </button>
+            </form>
+          )}
+
+          {!success && (
+            <div className="mt-8 text-center">
+              <p className="text-slate-500 text-sm">
+                Şifreni hatırladın mı?{' '}
+                <Link to="/login" className="text-white font-bold hover:text-red-500 underline">
+                  Giriş Yap
+                </Link>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

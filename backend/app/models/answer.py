@@ -19,3 +19,6 @@ class Answer(Base):
     # --- İŞTE EKSİK OLAN KISIM BURASIYDI ---
     # Cevabın hangi soruya ait olduğunu bilmesi için bu ilişki şart!
     question = relationship("Question", back_populates="answers")
+    
+    # Favori ilişkisi
+    favorites = relationship("Favorite", back_populates="answer")
