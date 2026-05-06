@@ -18,7 +18,7 @@ cloudinary.config(
 # Tüm modelleri doğru sırayla import et (SQLAlchemy mapper init için kritik)
 from app.models import user, question, answer, notification, favorite  # noqa: F401
 
-from app.routers import auth_router, question_router, answer_router, notification_router, user_router, favorite_router
+from app.routers import auth_router, question_router, answer_router, notification_router, user_router, favorite_router, admin_router
 from app.core.database import engine, Base
 
 # Veritabanı tablolarını oluştur
@@ -47,6 +47,7 @@ app.include_router(answer_router.router)
 app.include_router(notification_router.router)
 app.include_router(user_router.router)
 app.include_router(favorite_router.router)
+app.include_router(admin_router.router)
 
 @app.get("/")
 def home():

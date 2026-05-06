@@ -18,6 +18,7 @@ class UserResponse(UserBase):
     id: int
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    is_admin: bool = False
 
     class Config:
         from_attributes = True

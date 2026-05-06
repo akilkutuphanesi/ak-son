@@ -14,13 +14,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // --- TEST İÇİN KORSAN KAPI (BACKEND'İ ATLAR) ---
-    if (email === 'admin' || email === 'admin@iste.edu.tr') {
-      navigate('/admin');
-      return; // İşlemi burada kes, aşağıdaki fetch (backend) kodlarına hiç girme
-    }
-
     setIsLoading(true);
     setError(null);
     try {
@@ -40,7 +33,21 @@ export default function Login() {
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('user_email', email);
-        navigate('/dashboard'); // Normal kullanıcılar buraya düşecek
+        
+        // Kullanıcının admin olup olmadığını kontrol et
+        const meRes = await fetch(`${API_BASE}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${data.access_token}` }
+        });
+        if (meRes.ok) {
+          const userData = await meRes.json();
+          if (userData.is_admin) {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard'); // Normal kullanıcılar buraya düşecek
+          }
+        } else {
+          navigate('/dashboard'); // Fallback
+        }
       } else { 
         throw new Error("Token alınamadı."); 
       }

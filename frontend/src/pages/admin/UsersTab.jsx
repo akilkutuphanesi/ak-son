@@ -1,12 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit, Ban, CheckCircle, X } from 'lucide-react';
 
 export default function UsersTab() {
-  const [users, setUsers] = useState([
-    { id: 1, name: "Ahmet Yılmaz", no: "2024101", dept: "Bilgisayar Müh.", role: "User", status: "Aktif" },
-    { id: 2, name: "Zeynep Kaya", no: "2024102", dept: "Yazılım Müh.", role: "Admin", status: "Aktif" },
-    { id: 3, name: "Caner Uysal", no: "2024103", dept: "Makine Müh.", role: "User", status: "Banlı" },
-  ]);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_BASE}/admin/users`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mappedUsers = data.map(u => ({
+            id: u.id,
+            name: u.display_name || u.email.split('@')[0],
+            no: u.id.toString(),
+            dept: u.department || "Belirtilmemiş",
+            role: u.is_admin ? "Admin" : "User",
+            status: u.is_active ? "Aktif" : "Banlı"
+          }));
+          setUsers(mappedUsers);
+        }
+      } catch (err) {
+        console.error("Kullanıcılar çekilemedi", err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);

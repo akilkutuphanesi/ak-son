@@ -4,7 +4,7 @@ from app.models.answer import Answer
 from app.models.notification import Notification # <-- Bildirim modelini de ekledik
 
 def get_all_questions(db: Session):
-    return db.query(Question).options(joinedload(Question.owner)).order_by(Question.created_at.desc()).all()
+    return db.query(Question).options(joinedload(Question.owner)).filter(Question.is_suspended == False).order_by(Question.created_at.desc()).all()
 
 def get_questions_by_owner(db: Session, user_id: int):
     return db.query(Question).options(joinedload(Question.owner)).filter(Question.owner_id == user_id).order_by(Question.created_at.desc()).all()
