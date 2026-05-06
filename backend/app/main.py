@@ -15,13 +15,10 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Akıl Kütüphanesi")
 
 # CORS
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-origins = [url.strip() for url in frontend_url.split(",")]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=False,  # <-- BURASI DÜZELTİLDİ
+    allow_origins=["*"], # Tüm domainlerden gelen isteklere izin ver
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
