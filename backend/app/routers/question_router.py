@@ -63,6 +63,23 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Soru bulunamadı")
     return question
 
+from app.schemas.question import QuestionUpdate
+
+@router.patch("/{question_id}", response_model=QuestionResponse)
+def update_question(
+    question_id: int, 
+    update_data: QuestionUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    question = question_repo.get_question_by_id(db, question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Soru bulunamadı")
+    if question.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu soruyu güncelleme yetkiniz yok")
+    
+    return question_repo.update_question(db, question, update_data)
+
 @router.delete("/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_question(question_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     question = question_repo.get_question_by_id(db, question_id)
@@ -70,5 +87,15 @@ def delete_question(question_id: int, db: Session = Depends(get_db), current_use
         raise HTTPException(status_code=404, detail="Soru bulunamadı")
     if question.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Yetkiniz yok")
+        
+    # Cloudinary'den resmi sil (Orphan Files önlemi)
+    if question.image_url:
+        try:
+            # Cloudinary URL'sinden dosya adını al (örn: /akil_kutuphanesi/resim_id.jpg -> akil_kutuphanesi/resim_id)
+            public_id = "akil_kutuphanesi/" + question.image_url.split('/')[-1].split('.')[0]
+            cloudinary.uploader.destroy(public_id)
+        except Exception as e:
+            print(f"Cloudinary resim silme hatası: {e}")
+            
     question_repo.delete_question(db, question_id)
     return None

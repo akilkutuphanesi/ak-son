@@ -14,20 +14,16 @@ DB_NAME = os.getenv("DB_NAME")
 
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Aiven bağlantısı için SSL ayarı (geliştirme ortamı - sertifika doğrulaması kapalı)
-ssl_context = ssl.create_default_context()
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
-
+# TiDB Cloud Serverless ve standart MySQL bulut sistemleri için güvenli SSL ayarı
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={
-        "ssl": ssl_context
+        "ssl": {"ssl_cert": None} 
     },
     pool_size=5,
     max_overflow=10,
     pool_timeout=30,
-    pool_recycle=1800,
+    pool_recycle=300,
     pool_pre_ping=True,
 )
 

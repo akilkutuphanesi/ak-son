@@ -21,6 +21,9 @@ class AnswerBase(BaseModel):
 class AnswerCreate(AnswerBase):
     question_id: int
 
+class AnswerUpdate(BaseModel):
+    content: str
+
 class AnswerResponse(AnswerBase):
     id: int
     content: str

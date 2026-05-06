@@ -50,7 +50,8 @@ export default function Register() {
         body: JSON.stringify({ 
           email: formData.email, 
           password: formData.password, 
-          department: formData.department 
+          department: formData.department,
+          display_name: `${formData.name} ${formData.surname}`.trim()
         }),
       });
       
@@ -58,8 +59,8 @@ export default function Register() {
       
       if (!response.ok) throw new Error(data.detail || "Kayıt işlemi başarısız oldu.");
       
-      alert("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz... 🚀");
-      navigate('/login');
+      toast.success("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz... 🚀");
+      setTimeout(() => navigate('/login'), 2000);
       
     } catch (err) {
       setError(err.message === "Failed to fetch" ? "Sunucuya bağlanılamadı!" : err.message);
@@ -80,40 +81,40 @@ export default function Register() {
         <ArrowLeft size={16} /> Ana Sayfa
       </Link>
 
-      <div className="relative z-10 w-full max-w-6xl grid md:grid-cols-12 bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative z-10 w-full max-w-6xl grid md:grid-cols-12 bg-white/5 backdrop-blur-xl rounded-3xl md:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
         {/* Sol Panel: Tanıtım */}
-        <div className="md:col-span-5 bg-gradient-to-br from-[#8b1a1a] to-[#5a1010] p-12 text-white flex flex-col justify-center relative overflow-hidden">
+        <div className="md:col-span-5 bg-gradient-to-br from-[#8b1a1a] to-[#5a1010] p-8 md:p-12 text-white flex flex-col justify-center relative overflow-hidden">
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="relative z-10 space-y-10 text-left">
+          <div className="relative z-10 space-y-8 md:space-y-10 text-left">
             <div className="space-y-2">
-              <div className="bg-white/10 p-3 rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-6">
-                <img src="/logo.png" className="w-16 h-16 object-contain" alt="İSTE Logo" />
+              <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-4 md:mb-6">
+                <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" />
               </div>
-              <div className="w-16 h-1.5 bg-red-500 rounded-full mb-6"></div>
-              <h2 className="text-5xl md:text-6xl font-black tracking-tighter uppercase leading-none">Akıl <br /><span className="text-red-400">Kütüphanesİ</span></h2>
-              <p className="text-sm font-bold text-red-200/40 tracking-[0.3em] uppercase pt-2">İskenderun Teknİk Ünİversİtesİ</p>
+              <div className="w-12 md:w-16 h-1.5 bg-red-500 rounded-full mb-4 md:mb-6"></div>
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-none">Akıl <br /><span className="text-red-400">Kütüphanesİ</span></h2>
+              <p className="text-xs md:text-sm font-bold text-red-200/40 tracking-[0.2em] md:tracking-[0.3em] uppercase pt-2">İskenderun Teknİk Ünİversİtesİ</p>
             </div>
             <div className="w-full h-px bg-white/10"></div>
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] text-white/90">Bilgi <br /> Paylaştıkça <br /> <span className="text-red-300/70 italic">Çoğalır.</span></h1>
-              <p className="text-sm md:text-base font-medium text-white/50 leading-relaxed max-w-[260px]">Kütüphanenin sessizliğini dijital bir etkileşimle buluşturuyoruz.</p>
+            <div className="space-y-3 md:space-y-4">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white/90">Bilgi <br /> Paylaştıkça <br /> <span className="text-red-300/70 italic">Çoğalır.</span></h1>
+              <p className="text-xs md:text-base font-medium text-white/50 leading-relaxed max-w-[260px] md:max-w-xs">Kütüphanenin sessizliğini dijital bir etkileşimle buluşturuyoruz.</p>
             </div>
           </div>
         </div>
 
         {/* Sağ Panel: Form */}
-        <div className="md:col-span-7 bg-[#121826]/40 p-8 md:p-14 flex flex-col justify-center min-h-[750px]">
-          <div className="flex justify-between items-start mb-8">
+        <div className="md:col-span-7 bg-[#121826]/40 p-6 md:p-14 flex flex-col justify-center min-h-auto md:min-h-[750px]">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-0 mb-6 md:mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2">Yeni Hesap Oluştur</h2>
-              <p className="text-slate-400 text-sm">Kütüphaneye giriş yapmak için bilgilerinizi girin.</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">Yeni Hesap Oluştur</h2>
+              <p className="text-slate-400 text-xs md:text-sm">Kütüphaneye giriş yapmak için bilgilerinizi girin.</p>
             </div>
             {tableNumber ? (
-              <div className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-2xl flex items-center gap-2">
-                <span className="text-blue-400 font-bold text-[11px] uppercase tracking-widest">Masa #{tableNumber}</span>
+              <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
+                <span className="text-blue-400 font-bold text-[10px] md:text-[11px] uppercase tracking-widest">Masa #{tableNumber}</span>
               </div>
             ) : (
-              <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-2xl flex items-center gap-2">
+              <div className="bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
                 <AlertTriangle className="text-amber-500" size={14} />
                 <span className="text-amber-500 font-bold text-[10px] uppercase">Masa QR Gerekli</span>
               </div>
@@ -121,14 +122,14 @@ export default function Register() {
           </div>
 
           {error && (
-            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2 animate-pulse">
+            <div className="mb-4 md:mb-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2 animate-pulse">
               <AlertTriangle size={16} />
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative group">
                 <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
                 <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Adınız" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
@@ -211,7 +212,7 @@ export default function Register() {
               </button>
             </div>
 
-            <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-5 rounded-2xl transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-2">
+            <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 md:py-5 rounded-2xl transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-2 mt-2 md:mt-0">
               {isLoading ? (
                 <>
                   <Loader2 className="animate-spin" size={20} />

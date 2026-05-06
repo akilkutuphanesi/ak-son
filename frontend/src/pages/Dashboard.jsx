@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck } from 'lucide-react';
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-
+import UserModal from '../components/UserModal';
+import AvatarPickerModal from '../components/AvatarPickerModal';
+import CameraModal from '../components/CameraModal';
+import SettingsModal from '../components/SettingsModal';
+import QuestionDetailModal from '../components/QuestionDetailModal';
+import toast, { Toaster } from 'react-hot-toast';
+import Swal from 'sweetalert2';
 export default function Dashboard() {
     const navigate = useNavigate();
     const API_BASE = import.meta.env.VITE_API_URL;
@@ -44,11 +50,54 @@ export default function Dashboard() {
     const [isDeletingQuestion, setIsDeletingQuestion] = useState(null);
     const [isDeletingAnswer, setIsDeletingAnswer] = useState(null);
 
+    // --- DÜZENLEME STATE'LERİ ---
+    const [editingQuestion, setEditingQuestion] = useState(null);
+    const [editQuestionTitle, setEditQuestionTitle] = useState("");
+    const [editQuestionContent, setEditQuestionContent] = useState("");
+
+    const [editingAnswerId, setEditingAnswerId] = useState(null);
+    const [editAnswerContent, setEditAnswerContent] = useState("");
+
+    // --- AVATAR SEÇİM STATE'LERİ VE GÖRSELLERİ ---
+    const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
+    const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(localStorage.getItem('selected_avatar_url') || null);
+
+    // İSTE Bölümlerine Özel Üretilmiş Seçkin Hayvan Avatarları
+    // --- %100 ÇALIŞAN GARANTİLİ AVATARLAR (Yerel AI PNG + DiceBear API) ---
+    // --- %100 UYUMLU, 3D VE TEK TİP AVATARLAR (DiceBear Not-Avataaars & Notion Style) ---
+    // --- %100 ÇALIŞAN, 3D GÖRÜNÜMLÜ VE TUTARLI AVATAR SETİ ---
+    const avatarOptions = [
+        // Bilgisayar (Modern/Gözlüklü)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4",
+        // Denizcilik (Mavi/Koyu Tema)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=003566",
+        // İnşaat/Mimarlık (Toprak Tonları)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Caleb&backgroundColor=ffc300",
+        // Gastronomi (Sıcak Tonlar)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Aria&backgroundColor=fbcfe8",
+        // Elektrik/Elektronik (Parlak/Enerjik)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Max&backgroundColor=ffea00",
+        // Ekonomi/Lojistik (Ciddi/Gri)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Jack&backgroundColor=d1d8e0",
+        // Havacılık (Gökyüzü)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=82ccdd",
+        // İSTE Genel (Kırmızı)
+        "https://api.dicebear.com/7.x/adventurer/svg?seed=Milo&backgroundColor=e63946"
+    ];
     const departments = ["Tümü", "Bilgisayar Mühendisliği", "Biyomedikal Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", "Denizcilik İşletmeleri Yönetimi", "Ekonomi", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", "Gastronomi ve Mutfak Sanatları", "Gemi İnşaatı ve Gemi Makineleri Mühendisliği", "Havacılık Elektrik ve Elektroniği", "Havacılık ve Uzay Mühendisliği", "Havacılık Yönetimi", "İç Mimarlık", "İnşaat Mühendisliği", "Lojistik Yönetimi"];
 
     const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
     const [passwordData, setPasswordData] = useState({ old: "", new: "", confirm: "" });
     const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+    const [fullScreenImage, setFullScreenImage] = useState(null);
+
+    // --- YENİ EKLENEN STATE: HESAP SİLME ---
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+    // --- FAVORİ VE KULLANICI PROFİLİ STATE'LERİ ---
+    const [favoritedIds, setFavoritedIds] = useState(new Set());
+    const [viewedUser, setViewedUser] = useState(null);
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -63,17 +112,17 @@ export default function Dashboard() {
                 await fetchQuestions(storedToken);
                 await fetchNotifications(storedToken);
                 await fetchMyAnswers(storedToken);
+                await fetchMyFavorites(storedToken);
             } catch (e) { console.error(e); }
         };
         initData();
     }, []);
 
-    // Geri tuşuna basıldığında eğer kamera açıksa kamerayı kapat, sayfadan çıkma
     useEffect(() => {
         const handleBackButton = (e) => {
             if (isCameraOpen) {
-                e.preventDefault(); 
-                stopCamera();       
+                e.preventDefault();
+                stopCamera();
                 window.history.pushState(null, null, window.location.pathname);
             }
         };
@@ -92,7 +141,21 @@ export default function Dashboard() {
             if (response.ok) {
                 const data = await response.json();
                 setUserProfile(data);
-                if (!localStorage.getItem('custom_display_name')) setDisplayName(data.email.split('@')[0]);
+
+                // BACKEND'DEN GELEN VERIYI STATE'E AL
+                if (data.display_name) {
+                    setDisplayName(data.display_name);
+                } else if (!localStorage.getItem('custom_display_name')) {
+                    setDisplayName(data.email.split('@')[0]);
+                } else {
+                    setDisplayName(localStorage.getItem('custom_display_name'));
+                }
+
+                if (data.avatar_url) {
+                    setSelectedAvatarUrl(data.avatar_url);
+                } else if (localStorage.getItem('selected_avatar_url')) {
+                    setSelectedAvatarUrl(localStorage.getItem('selected_avatar_url'));
+                }
             }
         } catch (error) { console.error(error); }
     };
@@ -127,6 +190,51 @@ export default function Dashboard() {
         } catch (error) { console.error(error); }
     };
 
+    // --- FAVORİ FONKSİYONLARI ---
+    const fetchMyFavorites = async (authToken = token) => {
+        try {
+            const response = await fetch(`${API_BASE}/favorites/me`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                const ids = new Set(data.filter(f => f.question_id).map(f => f.question_id));
+                setFavoritedIds(ids);
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    const handleToggleFavorite = async (questionId, e) => {
+        e.stopPropagation();
+        try {
+            const response = await fetch(`${API_BASE}/favorites/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ question_id: questionId })
+            });
+            if (response.ok) {
+                setFavoritedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(questionId)) { next.delete(questionId); }
+                    else { next.add(questionId); }
+                    return next;
+                });
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    // --- KULLANICI PROFİLİ MODAL ---
+    const openUserProfile = async (userId, e) => {
+        if (e) e.stopPropagation();
+        if (!userId || userId === userProfile?.id) return;
+        try {
+            const res = await fetch(`${API_BASE}/users/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                setViewedUser(data);
+                setIsUserModalOpen(true);
+            }
+        } catch (error) { console.error(error); }
+    };
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -152,7 +260,7 @@ export default function Dashboard() {
             }
         } catch (err) {
             console.error("Kamera hatası:", err);
-            alert("Kameraya erişilemedi. İzinleri kontrol edin.");
+            toast.error("Kameraya erişilemedi. İzinleri kontrol edin.");
             setIsCameraOpen(false);
         }
     };
@@ -177,17 +285,17 @@ export default function Dashboard() {
 
             canvas.toBlob(blob => {
                 const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
-                setNewImage(file); 
+                setNewImage(file);
                 const reader = new FileReader();
                 reader.onloadend = () => setImagePreview(reader.result);
                 reader.readAsDataURL(file);
-                stopCamera(); 
+                stopCamera();
             }, 'image/jpeg');
         }
     };
 
     const handleCreateQuestion = async () => {
-        if (!newTitle.trim() || !newContent.trim()) { alert("Başlık ve içerik giriniz."); return; }
+        if (!newTitle.trim() || !newContent.trim()) { toast.error("Başlık ve içerik giriniz."); return; }
         setIsSubmitting(true);
 
         try {
@@ -208,27 +316,55 @@ export default function Dashboard() {
                 setNewTitle(""); setNewContent(""); removeImage();
                 fetchQuestions(token);
                 setViewMode('feed');
-            } else { alert("Hata oluştu."); }
-        } catch (error) { alert("Sunucu bağlantı hatası!"); }
+                toast.success("Sorunuz yayınlandı!");
+            } else { toast.error("Hata oluştu."); }
+        } catch (error) { toast.error("Sunucu bağlantı hatası!"); }
         finally { setIsSubmitting(false); }
     };
 
     const handleDeleteQuestion = async (questionId, e = null) => {
         if (e) e.stopPropagation();
-        if (!window.confirm("Bu soruyu silmek istediğine emin misin?")) return;
+        const result = await Swal.fire({
+            title: 'Emin misin?',
+            text: "Bu soruyu silmek istediğine emin misin?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Evet, sil',
+            cancelButtonText: 'İptal',
+            background: '#161b2c',
+            color: '#fff'
+        });
+        if (!result.isConfirmed) return;
+
         setIsDeletingQuestion(questionId);
         try {
             const response = await fetch(`${API_BASE}/questions/${questionId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 setQuestions(prev => prev.filter(q => q.id !== questionId));
                 if (selectedQuestion?.id === questionId) setSelectedQuestion(null);
-            } else { alert("Silinemedi."); }
-        } catch (error) { alert("Hata oluştu."); }
+                toast.success("Soru başarıyla silindi.");
+            } else { toast.error("Silinemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
         finally { setIsDeletingQuestion(null); }
     };
 
     const handleDeleteAnswer = async (answerId) => {
-        if (!window.confirm("Bu cevabı silmek istediğine emin misin?")) return;
+        const result = await Swal.fire({
+            title: 'Emin misin?',
+            text: "Bu cevabı silmek istediğine emin misin?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Evet, sil',
+            cancelButtonText: 'İptal',
+            background: '#161b2c',
+            color: '#fff'
+        });
+        if (!result.isConfirmed) return;
+
         setIsDeletingAnswer(answerId);
         try {
             const response = await fetch(`${API_BASE}/answers/${answerId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
@@ -237,9 +373,46 @@ export default function Dashboard() {
                     setQuestionAnswers(prev => ({ ...prev, [selectedQuestion.id]: prev[selectedQuestion.id].filter(a => a.id !== answerId) }));
                 }
                 fetchMyAnswers(token);
-            } else { alert("Cevap silinemedi."); }
-        } catch (error) { alert("Hata oluştu."); }
+                toast.success("Cevap silindi.");
+            } else { toast.error("Cevap silinemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
         finally { setIsDeletingAnswer(null); }
+    };
+
+    const handleUpdateQuestion = async (questionId) => {
+        if (!editQuestionTitle.trim() || !editQuestionContent.trim()) return;
+        try {
+            const response = await fetch(`${API_BASE}/questions/${questionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title: editQuestionTitle, content: editQuestionContent })
+            });
+            if (response.ok) {
+                setEditingQuestion(null);
+                fetchQuestions(token);
+                if (selectedQuestion?.id === questionId) {
+                    setSelectedQuestion(prev => ({ ...prev, title: editQuestionTitle, content: editQuestionContent }));
+                }
+                toast.success("Soru güncellendi.");
+            } else { toast.error("Soru güncellenemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
+    };
+
+    const handleUpdateAnswer = async (answerId, questionId) => {
+        if (!editAnswerContent.trim()) return;
+        try {
+            const response = await fetch(`${API_BASE}/answers/${answerId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ content: editAnswerContent })
+            });
+            if (response.ok) {
+                setEditingAnswerId(null);
+                fetchAnswersForQuestion(questionId);
+                fetchMyAnswers(token);
+                toast.success("Cevap güncellendi.");
+            } else { toast.error("Cevap güncellenemedi."); }
+        } catch (error) { toast.error("Hata oluştu."); }
     };
 
     const handleSendAnswer = async (questionId) => {
@@ -255,11 +428,12 @@ export default function Dashboard() {
                 setNewAnswer("");
                 fetchAnswersForQuestion(questionId);
                 fetchMyAnswers(token);
+                toast.success("Cevabınız gönderildi.");
             } else {
                 const errData = await response.json();
-                alert("Cevap gönderilemedi: " + (errData.detail || "Bilinmeyen hata"));
+                toast.error("Cevap gönderilemedi: " + (errData.detail || "Bilinmeyen hata"));
             }
-        } catch (error) { alert("Sunucu hatası"); }
+        } catch (error) { toast.error("Sunucu hatası"); }
         finally { setIsAnswerSubmitting(false); }
     };
 
@@ -280,22 +454,19 @@ export default function Dashboard() {
         }
     };
 
-    // --- TÜMÜNÜ OKUNDU İŞARETLE FONKSİYONU ---
     const handleMarkAllAsRead = async (e) => {
         e.stopPropagation();
-        
-        // 1. ADIM: EKRANDAN ANINDA SİL (Kullanıcıyı hiç bekletme)
-        setNotifications([]); 
+        setNotifications([]);
         setUnreadCount(0);
-
-        // 2. ADIM: ARKA PLANDA VERİTABANINA BİLDİR
         try {
             await fetch(`${API_BASE}/notifications/clear-all`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-        } catch (error) { 
-            console.error("Bildirimler silinirken hata:", error); 
+            toast.success("Tüm bildirimler temizlendi.");
+        } catch (error) {
+            console.error("Bildirimler silinirken hata:", error);
+            toast.error("Bildirimler silinemedi.");
         }
     };
 
@@ -313,7 +484,7 @@ export default function Dashboard() {
                 try {
                     const response = await fetch(`${API_BASE}/questions/${n.question_id}`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (response.ok) { const questionData = await response.json(); openQuestionModal(questionData); }
-                    else { alert("Bu soru silinmiş veya ulaşılamıyor."); }
+                    else { toast.error("Bu soru silinmiş veya ulaşılamıyor."); }
                 } catch (error) { console.error(error); } finally { setIsLoading(false); }
             }
         }
@@ -321,15 +492,27 @@ export default function Dashboard() {
 
     const handleGoHome = () => { setViewMode('feed'); setSelectedDepartment('Tümü'); };
     const clearFilter = (e) => { e.stopPropagation(); setSelectedDepartment('Tümü'); };
-    const saveProfileSettings = () => { localStorage.setItem('custom_display_name', displayName); setIsSettingsOpen(false); alert("Profil güncellendi! ✅"); };
-    
+
+    const saveProfileSettings = async () => {
+        try {
+            await fetch(`${API_BASE}/auth/me/profile`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ display_name: displayName })
+            });
+            localStorage.setItem('custom_display_name', displayName);
+            setIsSettingsOpen(false);
+            toast.success("Profil güncellendi! ✅");
+        } catch (e) { console.error(e); toast.error("Güncelleme hatası"); }
+    };
+
     const handleChangePassword = async () => {
         if (passwordData.new !== passwordData.confirm) {
-            alert("Yeni şifreler eşleşmiyor!");
+            toast.error("Yeni şifreler eşleşmiyor!");
             return;
         }
         if (passwordData.new.length < 6) {
-            alert("Şifre en az 6 karakter olmalıdır!");
+            toast.error("Şifre en az 6 karakter olmalıdır!");
             return;
         }
 
@@ -337,9 +520,9 @@ export default function Dashboard() {
         try {
             const response = await fetch(`${API_BASE}/auth/change-password`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     old_password: passwordData.old,
@@ -348,17 +531,55 @@ export default function Dashboard() {
             });
 
             if (response.ok) {
-                alert("Şifre başarıyla değiştirildi! ✅");
+                toast.success("Şifre başarıyla değiştirildi! ✅");
                 setIsPasswordSectionOpen(false);
                 setPasswordData({ old: "", new: "", confirm: "" });
             } else {
                 const err = await response.json();
-                alert(err.detail || "Bir hata oluştu.");
+                toast.error(err.detail || "Bir hata oluştu.");
             }
         } catch (error) {
-            alert("Sunucu bağlantı hatası!");
+            toast.error("Sunucu bağlantı hatası!");
         } finally {
             setIsPasswordSubmitting(false);
+        }
+    };
+
+    // --- YENİ EKLENEN FONKSİYON: HESAP SİLME ---
+    const handleDeleteAccount = async () => {
+        const result = await Swal.fire({
+            title: 'Hesabını Silmek Üzeresin!',
+            text: "Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm verileriniz kalıcı olarak silinecektir!",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#334155',
+            confirmButtonText: 'Evet, hesabımı sil',
+            cancelButtonText: 'İptal',
+            background: '#161b2c',
+            color: '#fff'
+        });
+        if (!result.isConfirmed) return;
+
+        setIsDeletingAccount(true);
+        try {
+            const response = await fetch(`${API_BASE}/auth/delete-account`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                toast.success("Hesabınız başarıyla silindi. Hoşçakalın!");
+                localStorage.clear();
+                navigate('/register');
+            } else {
+                const err = await response.json();
+                toast.error(err.detail || "Hesap silinirken bir hata oluştu.");
+            }
+        } catch (error) {
+            toast.error("Sunucu bağlantı hatası!");
+        } finally {
+            setIsDeletingAccount(false);
         }
     };
 
@@ -366,17 +587,20 @@ export default function Dashboard() {
     const getInitial = (name) => name ? name.charAt(0).toUpperCase() : "?";
 
     const myQuestions = questions.filter(q => q.owner?.email === userProfile?.email);
+    const myFavoriteQuestions = questions.filter(q => favoritedIds.has(q.id));
     let displayContent;
     if (viewMode === 'my_questions') { displayContent = myQuestions; }
     else if (viewMode === 'my_answers') { displayContent = myAnswers; }
+    else if (viewMode === 'favorites') { displayContent = myFavoriteQuestions; }
     else { displayContent = selectedDepartment === "Tümü" ? questions : questions.filter(q => q.owner?.department === selectedDepartment); }
 
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-slate-300 font-sans selection:bg-red-500/30 flex flex-col">
+            <Toaster position="top-center" containerStyle={{ top: 80, zIndex: 99999 }} toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '1rem' } }} />
             <nav className="sticky top-0 z-40 bg-[#0a0f1d]/80 backdrop-blur-xl border-b border-white/10 h-20 flex justify-between items-center px-6">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={handleGoHome}>
-                    <img src="/logo.png" className="w-10 h-10 brightness-0 invert object-contain" alt="İSTE Logo" />
-                    <h1 className="text-xl font-bold text-white tracking-tight hidden sm:block">Akıl <span className="text-red-600">Kütüphanesi</span></h1>
+                <div className="flex items-center gap-3 cursor-pointer group" onClick={handleGoHome}>
+                    <img src="/logo.png" className="w-11 h-11 md:w-12 md:h-12 brightness-0 invert object-contain group-hover:scale-105 transition-transform" alt="İSTE Logo" />
+                    <h1 className="text-2xl font-black text-white tracking-tighter hidden sm:block">Akıl <span className="text-red-500">Kütüphanesi</span></h1>
                 </div>
 
                 <div className="flex items-center gap-4 relative">
@@ -389,21 +613,19 @@ export default function Dashboard() {
                         </button>
                         {isNotificationsOpen && (
                             <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
-                                
+
                                 {/* --- GÜNCELLENEN BİLDİRİM BAŞLIĞI --- */}
                                 <div className="p-4 border-b border-white/5 bg-[#1a2035] flex justify-between items-center">
                                     <h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3>
                                     {notifications.length > 0 && (
-                                        <button 
-                                            onClick={handleMarkAllAsRead} 
+                                        <button
+                                            onClick={handleMarkAllAsRead}
                                             className="text-[10px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-wider transition-colors flex items-center gap-1 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1.5 rounded-lg border border-blue-500/20"
                                         >
                                             <CheckCheck size={14} /> Tümünü Okundu İşaretle
                                         </button>
                                     )}
                                 </div>
-                                {/* ----------------------------------- */}
-
                                 <div className="max-h-96 overflow-y-auto custom-scrollbar">
                                     {notifications.length > 0 ? notifications.map(n => (
                                         <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group flex gap-3">
@@ -420,180 +642,151 @@ export default function Dashboard() {
                             </div>
                         )}
                     </div>
-                    <button onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotificationsOpen(false); }} className="flex items-center gap-2"><div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-800 rounded-full flex items-center justify-center text-white font-bold border-2 border-[#0a0f1d] shadow-lg">{getInitial(displayName)}</div><ChevronDown size={16} className={`transition-transform duration-300 ${isProfileOpen ? 'rotate-180 text-red-500' : ''}`} /></button>
+
+                    <button onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotificationsOpen(false); }} className="flex items-center gap-2">
+                        {selectedAvatarUrl ? (
+                            <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-10 w-10 rounded-full border border-white/10 object-cover shadow-lg" />
+                        ) : (
+                            <div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-800 rounded-full flex items-center justify-center text-white font-bold border-2 border-[#0a0f1d] shadow-lg">{getInitial(displayName)}</div>
+                        )}
+                        <ChevronDown size={16} className={`transition-transform duration-300 ${isProfileOpen ? 'rotate-180 text-red-500' : ''}`} />
+                    </button>
                     {isProfileOpen && (
-                        <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
-                            <div className="bg-gradient-to-r from-red-900/50 to-red-600/50 p-6 flex flex-col items-center border-b border-white/5"><div className="h-16 w-16 bg-white text-red-600 rounded-full flex items-center justify-center text-2xl font-black mb-3 shadow-xl">{getInitial(displayName)}</div><h3 className="text-white font-bold text-lg">{displayName}</h3><span className="text-xs text-red-200 bg-black/20 px-3 py-1 rounded-full mt-1 backdrop-blur-sm truncate max-w-[200px]">{userProfile?.department || "Bölüm Yok"}</span></div>
+                        <div className="absolute top-16 right-0 w-[90vw] max-w-xs md:w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
+                            <div className="bg-gradient-to-r from-red-900/50 to-red-600/50 p-6 flex flex-col items-center border-b border-white/5 relative">
+                                <button
+                                    onClick={() => setIsAvatarPickerOpen(true)}
+                                    className="relative group h-16 w-16 mb-3 rounded-full"
+                                    title="Avatar Seç"
+                                >
+                                    {selectedAvatarUrl ? (
+                                        <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-16 w-16 rounded-full border border-white object-cover shadow-xl" />
+                                    ) : (
+                                        <div className="h-16 w-16 bg-white text-red-600 rounded-full flex items-center justify-center text-2xl font-black shadow-xl">
+                                            {getInitial(displayName)}
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <ImageIcon size={20} className="text-white" />
+                                    </div>
+                                </button>
+                                <h3 className="text-white font-bold text-lg">{displayName}</h3>
+                                <span className="text-xs text-red-200 bg-black/20 px-3 py-1 rounded-full mt-1 backdrop-blur-sm truncate max-w-[200px]">{userProfile?.department || "Bölüm Yok"}</span>
+                            </div>
                             <div className="grid grid-cols-2 gap-px bg-white/5 border-b border-white/5"><button onClick={() => { setViewMode('my_questions'); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myQuestions.length}</span><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Sorularım</span></button><button onClick={() => { setViewMode('my_answers'); fetchMyAnswers(); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myAnswers.length}</span><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Cevaplarım</span></button></div>
-                            <div className="p-2 space-y-1"><button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group"><Settings size={16} className="text-blue-400" /> Profil Ayarları</button><button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><LogOut size={16} className="text-red-400" /> Çıkış Yap</button></div>
+                            <div className="p-2 space-y-1"><button onClick={() => { setViewMode('favorites'); fetchMyFavorites(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><Heart size={16} className="text-red-400" /> Favorilerim <span className="ml-auto text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full">{myFavoriteQuestions.length}</span></button><button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group"><Settings size={16} className="text-blue-400" /> Profil Ayarları</button><button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><LogOut size={16} className="text-red-400" /> Çıkış Yap</button></div>
                         </div>
                     )}
                 </div>
             </nav>
 
+
+            {/* --- KULLANICI PROFİL MODALI --- */}
+            <UserModal
+                isOpen={isUserModalOpen}
+                onClose={() => setIsUserModalOpen(false)}
+                viewedUser={viewedUser}
+            />
+
+            {/* --- AVATAR SEÇİM MODALI --- */}
+            <AvatarPickerModal
+                isOpen={isAvatarPickerOpen}
+                onClose={() => setIsAvatarPickerOpen(false)}
+                avatarOptions={avatarOptions}
+                selectedAvatarUrl={selectedAvatarUrl}
+                onSelectAvatar={async (url) => {
+                    setSelectedAvatarUrl(url);
+                    localStorage.setItem('selected_avatar_url', url);
+                    setIsAvatarPickerOpen(false);
+                    setIsProfileOpen(false);
+                    try {
+                        await fetch(`${API_BASE}/auth/me/profile`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ avatar_url: url })
+                        });
+                    } catch (e) { console.error("Avatar kaydı hatası", e); }
+                }}
+                onRemoveAvatar={async () => {
+                    setSelectedAvatarUrl(null);
+                    localStorage.removeItem('selected_avatar_url');
+                    setIsAvatarPickerOpen(false);
+                    try {
+                        await fetch(`${API_BASE}/auth/me/profile`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ avatar_url: null })
+                        });
+                    } catch (e) { console.error("Avatar silme hatası", e); }
+                }}
+            />
+
             {/* --- KAMERA MODALI --- */}
-            {isCameraOpen && (
-                <div className="fixed inset-0 z-[110] bg-black/90 flex flex-col items-center justify-center">
-                    <div className="relative w-full max-w-2xl bg-black rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
-                        <video ref={videoRef} autoPlay playsInline className="w-full h-[60vh] object-cover transform scale-x-[-1]"></video>
-                        <canvas ref={canvasRef} className="hidden"></canvas>
-                        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/50 to-transparent flex justify-between items-center">
-                            <button onClick={stopCamera} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all">
-                                <X size={24} />
-                            </button>
-                            <button onClick={capturePhoto} className="h-16 w-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-all group">
-                                <div className="h-12 w-12 bg-white rounded-full group-hover:bg-red-500 transition-colors"></div>
-                            </button>
-                            <div className="w-12"></div>
-                        </div>
-                    </div>
-                    <p className="text-slate-400 mt-4 text-sm animate-pulse">Fotoğrafı çekmek için butona bas</p>
-                </div>
-            )}
+            <CameraModal
+                isOpen={isCameraOpen}
+                videoRef={videoRef}
+                canvasRef={canvasRef}
+                stopCamera={stopCamera}
+                capturePhoto={capturePhoto}
+            />
 
             {/* --- SORU DETAY MODALI --- */}
-            {selectedQuestion && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <MessageSquare size={16} className="text-red-500" /> Soru Detayı
-                            </h3>
-                            <div className="flex items-center gap-2">
-                                {userProfile?.email === selectedQuestion.owner?.email && (
-                                    <button onClick={() => handleDeleteQuestion(selectedQuestion.id)} className="bg-red-500/10 hover:bg-red-600 hover:text-white text-red-500 p-2 rounded-full transition-all">
-                                        {isDeletingQuestion === selectedQuestion.id ? <Loader2 className="animate-spin" size={20} /> : <Trash2 size={20} />}
-                                    </button>
-                                )}
-                                <button onClick={closeQuestionModal} className="bg-white/5 hover:bg-white/20 text-slate-400 hover:text-white p-2 rounded-full transition-all"><X size={20} /></button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3"><div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">{selectedQuestion.owner ? getInitial(selectedQuestion.owner.email) : "?"}</div><div><h1 className="text-white font-bold text-sm">{selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? selectedQuestion.owner.email.split('@')[0] : "Anonim")}</h1><span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span></div></div>
-                                <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
-                                <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
-                                {selectedQuestion.image_url && (
-                                    <div className="mt-4 rounded-xl overflow-hidden border border-white/10">
-                                        <img src={selectedQuestion.image_url.startsWith('http') ? selectedQuestion.image_url : `${API_BASE}${selectedQuestion.image_url}`} alt="Soru görseli" className="w-full object-cover max-h-[400px]" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
-                            <div className="space-y-4">
-                                {questionAnswers[selectedQuestion.id]?.length > 0 ? (
-                                    questionAnswers[selectedQuestion.id].map(ans => (
-                                        <div key={ans.id} className="flex gap-4 group/answer">
-                                            <div className="flex-shrink-0 flex flex-col items-center gap-2"><div className="h-8 w-8 bg-[#1f2937] rounded-full flex items-center justify-center text-xs font-bold text-slate-300 border border-white/10">{ans.owner ? getInitial(ans.owner.email) : "?"}</div><div className="w-px flex-1 bg-white/5"></div></div>
-                                            <div className="flex-1 pb-4">
-                                                <div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg relative">
-                                                    {(userProfile?.email === ans.owner?.email || userProfile?.email === selectedQuestion?.owner?.email) && (
-                                                        <button onClick={() => handleDeleteAnswer(ans.id)} className="absolute top-2 right-2 text-slate-600 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-500/10 transition-all opacity-0 group-hover/answer:opacity-100">
-                                                            {isDeletingAnswer === ans.id ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
-                                                        </button>
-                                                    )}
-                                                    <div className="flex justify-between items-center mb-2"><h4 className="text-xs font-bold text-red-400">{ans.owner?.email === userProfile?.email ? displayName : (ans.owner ? ans.owner.email.split('@')[0] : "Misafir")}</h4><span className="text-[10px] text-slate-600 pr-6">{new Date(ans.created_at).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })}</span></div>
-                                                    <p className="text-sm text-slate-300 leading-relaxed">{ans.content}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : <div className="text-center py-8 opacity-50 text-xs">Henüz cevap yok.</div>}
-                            </div>
-                        </div>
-                        <div className="p-4 border-t border-white/10 bg-[#0d1117] shrink-0"><div className="flex gap-3"><input type="text" value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)} placeholder="Cevap yaz..." className="flex-1 bg-[#161b2c] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500/50 shadow-inner" /><button onClick={() => handleSendAnswer(selectedQuestion.id)} disabled={isAnswerSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 rounded-xl font-bold flex items-center justify-center transition-all disabled:opacity-50">{isAnswerSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}</button></div></div>
-                    </div>
-                </div>
-            )}
+            <QuestionDetailModal
+                selectedQuestion={selectedQuestion}
+                closeQuestionModal={closeQuestionModal}
+                userProfile={userProfile}
+                displayName={displayName}
+                selectedAvatarUrl={selectedAvatarUrl}
+                getInitial={getInitial}
+                openUserProfile={openUserProfile}
+                editingQuestion={editingQuestion}
+                setEditingQuestion={setEditingQuestion}
+                editQuestionTitle={editQuestionTitle}
+                setEditQuestionTitle={setEditQuestionTitle}
+                editQuestionContent={editQuestionContent}
+                setEditQuestionContent={setEditQuestionContent}
+                handleUpdateQuestion={handleUpdateQuestion}
+                handleDeleteQuestion={handleDeleteQuestion}
+                isDeletingQuestion={isDeletingQuestion}
+                setFullScreenImage={setFullScreenImage}
+                API_BASE={API_BASE}
+                questionAnswers={questionAnswers}
+                editingAnswerId={editingAnswerId}
+                setEditingAnswerId={setEditingAnswerId}
+                editAnswerContent={editAnswerContent}
+                setEditAnswerContent={setEditAnswerContent}
+                handleUpdateAnswer={handleUpdateAnswer}
+                handleDeleteAnswer={handleDeleteAnswer}
+                isDeletingAnswer={isDeletingAnswer}
+                newAnswer={newAnswer}
+                setNewAnswer={setNewAnswer}
+                handleSendAnswer={handleSendAnswer}
+                isAnswerSubmitting={isAnswerSubmitting}
+            />
 
             {/* --- PROFİL AYARLARI MODALI --- */}
-            {isSettingsOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-[#161b2c] w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a2035]">
-                            <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                                <Settings size={20} className="text-red-500" /> Profil Ayarları
-                            </h3>
-                            <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-white">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        
-                        <div className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Görünen İsim</label>
-                                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 transition-colors" />
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Bölüm</label>
-                                <div className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-slate-400 cursor-not-allowed flex items-center justify-between">
-                                    {userProfile?.department}<Info size={16} />
-                                </div>
-                            </div>
-
-                            {/* --- ŞİFRE DEĞİŞTİRME BÖLÜMÜ --- */}
-                            <div className="pt-4 border-t border-white/5">
-                                <button 
-                                    type="button"
-                                    onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors"
-                                >
-                                    {isPasswordSectionOpen ? "Vazgeç" : "Şifre Değiştirmek İstiyorum"}
-                                </button>
-
-                                {isPasswordSectionOpen && (
-                                    <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <input 
-                                            type="password" 
-                                            placeholder="Mevcut Şifre"
-                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50"
-                                            value={passwordData.old}
-                                            onChange={(e) => setPasswordData({...passwordData, old: e.target.value})}
-                                        />
-                                        <input 
-                                            type="password" 
-                                            placeholder="Yeni Şifre"
-                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50"
-                                            value={passwordData.new}
-                                            onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
-                                        />
-                                        <input 
-                                            type="password" 
-                                            placeholder="Yeni Şifre (Tekrar)"
-                                            className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500/50"
-                                            value={passwordData.confirm}
-                                            onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
-                                        />
-                                        <button 
-                                            type="button"
-                                            onClick={handleChangePassword}
-                                            disabled={isPasswordSubmitting}
-                                            className="w-full py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-500/20 transition-all"
-                                        >
-                                            {isPasswordSubmitting ? "İşleniyor..." : "Şifreyi Güncelle"}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t border-white/10 bg-[#1a2035] flex justify-end gap-3">
-                            <button onClick={() => setIsSettingsOpen(false)} className="px-6 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5">İptal</button>
-                            <button onClick={saveProfileSettings} className="px-6 py-3 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg flex items-center gap-2">
-                                <Save size={16} /> Kaydet
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                displayName={displayName}
+                setDisplayName={setDisplayName}
+                userProfile={userProfile}
+                isPasswordSectionOpen={isPasswordSectionOpen}
+                setIsPasswordSectionOpen={setIsPasswordSectionOpen}
+                passwordData={passwordData}
+                setPasswordData={setPasswordData}
+                handleChangePassword={handleChangePassword}
+                isPasswordSubmitting={isPasswordSubmitting}
+                handleDeleteAccount={handleDeleteAccount}
+                isDeletingAccount={isDeletingAccount}
+                saveProfileSettings={saveProfileSettings}
+            />
 
             {/* --- ALT NAVİGASYON VE FİLTRE --- */}
             {viewMode === 'feed' && (
-                <div className="fixed bottom-8 left-8 z-40 flex flex-col items-start gap-4">
+                <div className="fixed bottom-6 left-4 z-40 flex flex-col items-start gap-4">
                     {isFilterOpen && (
-                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-80 max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
+                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-[min(320px,calc(100vw-2rem))] max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
                             <div className="flex justify-between items-center mb-4 px-2">
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12} /> Bölüm Filtrele</h2>
                                 <button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16} /></button>
@@ -627,27 +820,31 @@ export default function Dashboard() {
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
                             <div className="flex gap-4">
-                                <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div>
+                                {selectedAvatarUrl ? (
+                                    <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-12 w-12 rounded-full border border-white/10 object-cover shadow-lg flex-shrink-0 bg-[#0d1117]" />
+                                ) : (
+                                    <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div>
+                                )}
                                 <div className="flex-1 space-y-3">
                                     <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
                                     <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
                                     {imagePreview && (
                                         <div className="relative inline-block mt-2">
-                                            <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20" />
+                                            <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20 shadow-md" />
                                             <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 border border-[#0a0f1d] hover:scale-110 transition-transform"><X size={12} /></button>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center pt-2">
-                                        <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap justify-between items-center gap-2 pt-2">
+                                        <div className="flex items-center gap-1 flex-wrap">
                                             <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
-                                            <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
-                                                <Paperclip size={16} /> Fotoğraf Ekle
+                                            <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
+                                                <Paperclip size={15} /> <span className="hidden sm:inline">Fotoğraf</span><span className="sm:hidden">Ekle</span>
                                             </button>
-                                            <button onClick={startCamera} className="flex items-center gap-2 text-slate-400 hover:text-red-500 transition-colors text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-white/5">
-                                                <Camera size={16} /> Kamera
+                                            <button onClick={startCamera} className="flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
+                                                <Camera size={15} /> Kamera
                                             </button>
                                         </div>
-                                        <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50">
+                                        <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95 flex-shrink-0">
                                             {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
                                         </button>
                                     </div>
@@ -659,7 +856,7 @@ export default function Dashboard() {
                     <div className="space-y-6 pb-24">
                         <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2">
                             <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
-                            {viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))}
+                            {viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (viewMode === 'favorites' ? "❤️ Favorilerim" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment)))}
                             <span className="text-slate-600 ml-1">({displayContent.length})</span>
                         </h2>
                         {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40} /> : displayContent.length > 0 ? (
@@ -673,7 +870,7 @@ export default function Dashboard() {
                                             </div>
                                             <span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                         </div>
-                                        <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative">
+                                        <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative shadow-inner">
                                             <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div>
                                             <p className="text-slate-300 italic text-sm">"{item.content}"</p>
                                         </div>
@@ -689,30 +886,60 @@ export default function Dashboard() {
                                             </button>
                                         )}
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300">{item.owner?.email === userProfile?.email ? getInitial(displayName) : (item.owner ? getInitial(item.owner.email) : "?")}</div>
-                                                <div><h3 className="text-white font-bold text-sm leading-none flex items-center gap-2">{item.owner?.email === userProfile?.email ? displayName : (item.owner ? item.owner.email.split('@')[0] : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} />{item.owner?.department || "Genel"}</p></div>
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div
+                                                    className={`h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative flex-shrink-0 ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:ring-2 hover:ring-red-500/50 transition-all' : ''}`}
+                                                    onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}
+                                                    title={item.owner?.email !== userProfile?.email ? 'Profili Görüntüle' : ''}
+                                                >
+                                                    {item.owner?.email === userProfile?.email ? (
+                                                        selectedAvatarUrl ? <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(displayName)
+                                                    ) : (item.owner?.avatar_url ? <img src={item.owner.avatar_url} alt="Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(item.owner?.display_name || item.owner?.email || "?"))}
+                                                </div>
+                                                <div className="min-w-0"><h3 className={`text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:text-red-400 transition-colors' : ''}`} onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}>{item.owner?.email === userProfile?.email ? displayName : (item.owner ? (item.owner.display_name || item.owner.email.split('@')[0]) : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
                                             </div>
                                             <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                         </div>
                                         <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
                                         <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
                                         {item.image_url && (
-                                            <div className="mb-6 rounded-xl overflow-hidden border border-white/10" onClick={() => openQuestionModal(item)}>
-                                                <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" />
+                                            <div className="relative mb-6 rounded-xl overflow-hidden border border-white/10 bg-black/20 flex justify-center group/img cursor-pointer shadow-inner" onClick={(e) => { e.stopPropagation(); setFullScreenImage(item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`); }}>
+                                                <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                    <Maximize2 className="text-white drop-shadow-lg" size={32} />
+                                                </div>
                                             </div>
                                         )}
                                         <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
-                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10"><Maximize2 size={14} className="text-blue-400" /> İncele</button>
-                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2"><MessageCircle size={14} /> Cevapla</button>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                                                    <MessageCircle size={14} className="text-blue-400" />
+                                                    <span>{item.answer_count || 0}</span>
+                                                </button>
+                                                <button onClick={(e) => handleToggleFavorite(item.id, e)} className={`text-xs font-bold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg ${favoritedIds.has(item.id) ? 'text-red-500 bg-red-500/10' : 'text-slate-500 bg-white/5 hover:text-red-400 hover:bg-red-500/10'}`} title="Favorilere Ekle">
+                                                    <Heart size={14} fill={favoritedIds.has(item.id) ? 'currentColor' : 'none'} />
+                                                    <span>{item.favorite_count !== undefined ? (item.favorite_count + (favoritedIds.has(item.id) && !item.is_favorited ? 1 : (!favoritedIds.has(item.id) && item.is_favorited ? -1 : 0))) : 0}</span>
+                                                </button>
+                                            </div>
+                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all">İncele & Cevapla</button>
                                         </div>
                                     </div>
                                 )
                             ))
-                        ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center"><Info size={32} className="mb-4 text-slate-700" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>}
+                        ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center shadow-inner"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>}
                     </div>
                 </main>
             </div>
+
+            {/* --- LIGHTBOX (TAM EKRAN GÖRSEL) --- */}
+            {fullScreenImage && (
+                <div className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-auto custom-scrollbar" onClick={() => setFullScreenImage(null)}>
+                    <button className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors p-2 rounded-full bg-white/5 hover:bg-red-500/20" onClick={() => setFullScreenImage(null)}>
+                        <X size={24} />
+                    </button>
+                    <img src={fullScreenImage} alt="Tam Boyut Soru" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl scale-100 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()} />
+                </div>
+            )}
         </div>
     );
 }

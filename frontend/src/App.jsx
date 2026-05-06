@@ -11,6 +11,7 @@ import UsersTab from './pages/admin/UsersTab';
 import ContentTab from './pages/admin/ContentTab';
 import SettingsTab from './pages/admin/SettingsTab';
 import ReportsTab from './pages/admin/ReportsTab';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
 
         {/* NESTED ADMIN ROTALARI */}
@@ -31,6 +33,7 @@ function App() {
           <Route path="reports" element={<ReportsTab />} />
           {/* Raporlar için ayrı sayfa yapmadık, Settings veya Dashboard'a yönlendirebilirsin veya "reports" linkini AdminLayout'tan silebilirsin */}
         </Route>
+        
       </Routes>
     </Router>
   );
