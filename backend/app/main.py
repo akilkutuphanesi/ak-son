@@ -23,9 +23,35 @@ from app.models import user, question, answer, notification, favorite  # noqa: F
 
 from app.routers import auth_router, question_router, answer_router, notification_router, user_router, favorite_router, admin_router
 from app.core.database import engine, Base
+from sqlalchemy import text
 
 # Veritabanı tablolarını oluştur
 Base.metadata.create_all(bind=engine)
+
+# Canlı veritabanı için manuel kolon eklemeleri (Eğer tablo varsa ve kolon yoksa)
+try:
+    with engine.begin() as conn:
+        try:
+            conn.execute(text("ALTER TABLE questions ADD COLUMN view_count INTEGER DEFAULT 0;"))
+        except Exception:
+            pass  # Kolon zaten varsa hata verir, geç.
+        
+        try:
+            conn.execute(text("ALTER TABLE answers ADD COLUMN is_best_answer BOOLEAN DEFAULT FALSE;"))
+        except Exception:
+            pass
+            
+        try:
+            conn.execute(text("ALTER TABLE questions ADD COLUMN is_suspended BOOLEAN DEFAULT FALSE;"))
+        except Exception:
+            pass
+            
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;"))
+        except Exception:
+            pass
+except Exception as e:
+    print(f"Migration error: {e}")
 
 app = FastAPI(title="Akıl Kütüphanesi")
 app.state.limiter = limiter
