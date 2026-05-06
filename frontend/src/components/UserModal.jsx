@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, GraduationCap, MessageSquare, CheckCheck, Loader2, Calendar, Heart } from 'lucide-react';
+import { X, GraduationCap, MessageSquare, CheckCheck, Loader2, Calendar, Heart, Award } from 'lucide-react';
 
 export default function UserModal({ isOpen, onClose, viewedUser, onQuestionClick, initialTab = 'questions', initialScroll = 0 }) {
     const [activeTab, setActiveTab] = useState(initialTab); // 'questions' or 'answers'
@@ -83,9 +83,15 @@ export default function UserModal({ isOpen, onClose, viewedUser, onQuestionClick
                     <h3 className="text-white font-black text-2xl tracking-tight mb-2 text-center drop-shadow-md">
                         {viewedUser.display_name || viewedUser.email.split('@')[0]}
                     </h3>
-                    <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
-                        <GraduationCap size={14} className="text-red-400" />
-                        <span className="text-[11px] font-bold text-red-200 uppercase tracking-widest">{viewedUser.department || "Bölüm Yok"}</span>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
+                            <GraduationCap size={14} className="text-red-400" />
+                            <span className="text-[11px] font-bold text-red-200 uppercase tracking-widest">{viewedUser.department || "Bölüm Yok"}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-4 py-1.5 rounded-full backdrop-blur-md" title={`İtibar Puanı: ${viewedUser.reputation || 0}`}>
+                            <Award size={14} className="text-orange-400" />
+                            <span className="text-[11px] font-bold text-orange-300 uppercase tracking-widest">{viewedUser.badge || "Çaylak"} ({viewedUser.reputation || 0})</span>
+                        </div>
                     </div>
                 </div>
 

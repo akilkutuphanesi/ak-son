@@ -1,13 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
-
 import cloudinary
-
 from dotenv import load_dotenv
 
 load_dotenv() # .env dosyasını okutur
+
+limiter = Limiter(key_func=get_remote_address)
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -25,12 +28,16 @@ from app.core.database import engine, Base
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Akıl Kütüphanesi")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Tüm domainlerden gelen isteklere izin ver
-    allow_credentials=False,
+    allow_origins=[FRONTEND_URL, "http://localhost:5173", "https://akil-kutuphanesi.vercel.app"], # Sadece kendi sitenden gelen isteklere izin ver (Güvenlik)
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

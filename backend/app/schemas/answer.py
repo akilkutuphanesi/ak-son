@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 from app.schemas.user import UserResponse
@@ -17,18 +17,19 @@ class QuestionInfo(BaseModel):
         from_attributes = True
 
 class AnswerBase(BaseModel):
-    content: str
+    content: str = Field(..., min_length=2, max_length=3000)
 
 class AnswerCreate(AnswerBase):
     question_id: int
 
 class AnswerUpdate(BaseModel):
-    content: str
+    content: str = Field(..., min_length=2, max_length=3000)
 
 class AnswerResponse(AnswerBase):
     id: int
     content: str
     created_at: datetime
+    is_best_answer: bool = False
     question_id: int
     owner_id: int
     owner: Optional[UserResponse] = None

@@ -14,6 +14,7 @@ class Question(Base):
     # ----------------------------------------
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.now)
+    view_count = Column(Integer, default=0)
 
     owner = relationship("User", back_populates="questions")
     answers = relationship("Answer", back_populates="question")

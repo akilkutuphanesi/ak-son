@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import timedelta
@@ -9,8 +9,9 @@ from typing import Optional
 from app.core.database import get_db
 from app.core.security import create_access_token, verify_password, get_password_hash, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.repositories import user_repo
-from app.schemas.user import UserCreate, UserResponse, Token, UserProfileUpdate
+from app.schemas.user import UserCreate, UserResponse, Token, UserProfileUpdate, UserPublicProfile
 from app.models.user import User
+from app.repositories import question_repo, answer_repo
 
 # Silme işlemi için gereken modeller
 from app.models.question import Question
@@ -20,6 +21,8 @@ from app.models.favorite import Favorite
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+from app.core.rate_limit import limiter
 
 # --- SCHEMAS (Veri Modelleri) ---
 class ChangePasswordRequest(BaseModel):
@@ -31,7 +34,8 @@ class ForgotPasswordRequest(BaseModel):
 
 # 1. KAYIT OLMA
 @router.post("/register", response_model=UserResponse)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     db_user = user_repo.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı.")
@@ -39,7 +43,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 # 2. GİRİŞ YAPMA
 @router.post("/login", response_model=Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = user_repo.get_user_by_email(db, email=form_data.username)
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -76,9 +81,30 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     return user
 
 # 4. BEN KİMİM? (Profil Bilgisi İçin)
-@router.get("/me", response_model=UserResponse)
-def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
+@router.get("/me", response_model=UserPublicProfile)
+def read_users_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_questions = question_repo.get_questions_by_owner(db, current_user.id)
+    user_answers = answer_repo.get_answers_by_owner(db, current_user.id)
+    
+    calculated_reputation = (len(user_questions) * 2) + (len(user_answers) * 5) + sum(15 for a in user_answers if getattr(a, 'is_best_answer', False))
+    
+    badge = "Çaylak"
+    if calculated_reputation >= 200: badge = "Ordinaryüs"
+    elif calculated_reputation >= 100: badge = "Usta"
+    elif calculated_reputation >= 50: badge = "Bilgin"
+    elif calculated_reputation >= 20: badge = "Çırak"
+    
+    return UserPublicProfile(
+        id=current_user.id,
+        email=current_user.email,
+        display_name=current_user.display_name,
+        avatar_url=current_user.avatar_url,
+        department=current_user.department,
+        question_count=len(user_questions),
+        answer_count=len(user_answers),
+        reputation=calculated_reputation,
+        badge=badge
+    )
 
 # 4.1. PROFİL BİLGİLERİNİ GÜNCELLEME (Avatar, İsim)
 @router.patch("/me/profile", response_model=UserResponse)
@@ -146,8 +172,9 @@ def delete_my_account(db: Session = Depends(get_db), current_user: User = Depend
 
 # 7. ŞİFREMİ UNUTTUM (Simülasyon)
 @router.post("/forgot-password")
-async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    user = user_repo.get_user_by_email(db, email=request.email)
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = user_repo.get_user_by_email(db, email=body.email)
     if not user:
         # Güvenlik gereği email sistemde olmasa bile aynı mesajı döneriz (Email Enumeration'ı engellemek için) ama bu eğitim projesi, doğrudan mesaj verebiliriz.
         raise HTTPException(status_code=404, detail="Bu e-posta adresi ile kayıtlı bir hesap bulunamadı.")

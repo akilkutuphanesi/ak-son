@@ -1,13 +1,18 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from app.models.question import Question
 from app.models.answer import Answer
 from app.models.notification import Notification # <-- Bildirim modelini de ekledik
 
-def get_all_questions(db: Session):
-    return db.query(Question).options(joinedload(Question.owner)).order_by(Question.created_at.desc()).all()
+def get_all_questions(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(Question)\
+        .options(joinedload(Question.owner), selectinload(Question.answers), selectinload(Question.favorites))\
+        .order_by(Question.created_at.desc()).offset(skip).limit(limit).all()
 
 def get_questions_by_owner(db: Session, user_id: int):
-    return db.query(Question).options(joinedload(Question.owner)).filter(Question.owner_id == user_id).order_by(Question.created_at.desc()).all()
+    return db.query(Question)\
+        .options(joinedload(Question.owner), selectinload(Question.answers), selectinload(Question.favorites))\
+        .filter(Question.owner_id == user_id)\
+        .order_by(Question.created_at.desc()).all()
 
 # image_url parametresini ekledik
 def create_question(db: Session, question, user_id: int, image_url: str = None):

@@ -13,11 +13,12 @@ class UserCreate(UserBase):
     department: str # Kayıtta zorunlu
     display_name: Optional[str] = None
 
-# Kullanıcı Bilgisi Dönerken (Şifre YOK, ID var)
 class UserResponse(UserBase):
     id: int
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    reputation: int = 0
+    badge: str = "Çaylak"
 
     class Config:
         from_attributes = True
@@ -32,7 +33,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Herkese Açık Kullanıcı Profili (soru/cevap sayısı dahil)
 class UserPublicProfile(BaseModel):
     id: int
     email: EmailStr
@@ -41,6 +41,8 @@ class UserPublicProfile(BaseModel):
     department: Optional[str] = None
     question_count: int = 0
     answer_count: int = 0
+    reputation: int = 0
+    badge: str = "Çaylak"
 
     class Config:
         from_attributes = True
