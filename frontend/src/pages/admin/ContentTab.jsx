@@ -1,40 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Eye, Trash2, X, Ban, CheckCircle, MessageSquare } from 'lucide-react';
 
 export default function ContentTab() {
-  // Dinamik İçerik State'i
-  const [contents, setContents] = useState([
-    { 
-      id: 101, 
-      author: "Ahmet Y.", 
-      title: "Java OOP Konusunda Takıldım", 
-      content: "Arkadaşlar interface ve abstract class arasındaki farkı bir türlü tam oturtamadım, Spring Boot'ta hangisini nerede kullanmalıyım? Müsait olan biri kısaca özetleyebilir mi?",
-      reports: 0, 
-      status: "Yayında", 
-      category: "Yazılım",
-      date: "10 dk önce"
-    },
-    { 
-      id: 102, 
-      author: "Caner U.", 
-      title: "Sınav soruları sızdırıldı (Linkli)", 
-      content: "Beyler yarınki vize sorularını buldum bu linkten indirebilirsiniz: http://calinti-link-ornegi.com",
-      reports: 12, 
-      status: "Askıya Alındı", 
-      category: "Genel",
-      date: "1 saat önce"
-    },
-    { 
-      id: 103, 
-      author: "Elif B.", 
-      title: "Türev integral özet notlarım", 
-      content: "Vize öncesi kendi çıkardığım PDF notları paylaşıyorum, umarım işinize yarar.",
-      reports: 1, 
-      status: "Yayında", 
-      category: "Matematik",
-      date: "3 saat önce"
-    },
-  ]);
+  const [contents, setContents] = useState([]);
+
+  useEffect(() => {
+    const fetchContents = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_BASE}/admin/contents`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setContents(data);
+        }
+      } catch (err) {
+        console.error("İçerikler çekilemedi", err);
+      }
+    };
+    fetchContents();
+  }, []);
 
   // Modal State'i
   const [selectedContent, setSelectedContent] = useState(null);
@@ -45,26 +32,55 @@ export default function ContentTab() {
   // --- İŞLEVSEL FONKSİYONLAR ---
 
   // İçeriği Sil
-  const handleDelete = (id) => {
-    if (window.confirm("Bu içeriği kalıcı olarak silmek istediğinize emin misiniz?")) {
-      setContents(contents.filter(c => c.id !== id));
-      if (selectedContent?.id === id) setSelectedContent(null); // Eğer modal açıksa onu da kapat
+  const handleDelete = async (id) => {
+    if (window.confirm("Bu içeriği kalıcı olarak silmek istediğinize emin misiniz? (Tüm cevapları da silinecektir)")) {
+      try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_BASE}/admin/contents/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+          setContents(contents.filter(c => c.id !== id));
+          if (selectedContent?.id === id) setSelectedContent(null);
+        } else {
+          alert("Silme işlemi başarısız oldu.");
+        }
+      } catch (err) {
+        console.error("Silme hatası", err);
+      }
     }
   };
 
   // İçeriğin Durumunu Değiştir (Yayında <-> Askıya Alındı)
-  const handleToggleStatus = (id) => {
-    setContents(contents.map(c => {
-      if (c.id === id) {
-        const newStatus = c.status === 'Yayında' ? 'Askıya Alındı' : 'Yayında';
-        // Eğer modal açıksa, içindeki veriyi de anlık güncellemek için state'i kopyalıyoruz
-        if (selectedContent?.id === id) {
-            setSelectedContent({ ...c, status: newStatus });
-        }
-        return { ...c, status: newStatus };
+  const handleToggleStatus = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE = import.meta.env.VITE_API_URL;
+      const res = await fetch(`${API_BASE}/admin/contents/${id}/toggle-status`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setContents(contents.map(c => {
+          if (c.id === id) {
+            if (selectedContent?.id === id) {
+                setSelectedContent({ ...c, status: data.new_status });
+            }
+            return { ...c, status: data.new_status };
+          }
+          return c;
+        }));
+      } else {
+        alert("Durum güncellenemedi.");
       }
-      return c;
-    }));
+    } catch (err) {
+      console.error("Askıya alma hatası", err);
+    }
   };
 
   return (

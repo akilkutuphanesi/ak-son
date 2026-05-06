@@ -19,6 +19,7 @@ class UserResponse(UserBase):
     avatar_url: Optional[str] = None
     reputation: int = 0
     badge: str = "Çaylak"
+    is_admin: bool = False
 
     class Config:
         from_attributes = True

@@ -6,6 +6,7 @@ from app.models.notification import Notification # <-- Bildirim modelini de ekle
 def get_all_questions(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Question)\
         .options(joinedload(Question.owner), selectinload(Question.answers), selectinload(Question.favorites))\
+        .filter(Question.is_suspended == False)\
         .order_by(Question.created_at.desc()).offset(skip).limit(limit).all()
 
 def get_questions_by_owner(db: Session, user_id: int):
