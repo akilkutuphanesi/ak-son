@@ -22,7 +22,9 @@ def create_new_answer(answer: AnswerCreate, db: Session = Depends(get_db), curre
     
     # 3. Bildirim oluştur
     if question.owner_id != current_user.id:
-        message = f"{current_user.email.split('@')[0]} soruna cevap yazdı."
+        # Kullanıcının görünen adı varsa onu, yoksa mail'in baş kısmını kullan
+        sender_name = current_user.display_name or current_user.email.split('@')[0]
+        message = f"{sender_name} soruna cevap yazdı."
         # ID'yi gönderiyoruz
         notification_repo.create_notification(db, user_id=question.owner_id, content=message, question_id=question.id)
         

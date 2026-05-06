@@ -596,10 +596,11 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-slate-300 font-sans selection:bg-red-500/30 flex flex-col">
+            <Toaster position="top-center" containerStyle={{ top: 80, zIndex: 99999 }} toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '1rem' } }} />
             <nav className="sticky top-0 z-40 bg-[#0a0f1d]/80 backdrop-blur-xl border-b border-white/10 h-20 flex justify-between items-center px-6">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={handleGoHome}>
-                    <img src="/logo.png" className="w-10 h-10 brightness-0 invert object-contain" alt="İSTE Logo" />
-                    <h1 className="text-xl font-bold text-white tracking-tight hidden sm:block">Akıl <span className="text-red-600">Kütüphanesi</span></h1>
+                <div className="flex items-center gap-3 cursor-pointer group" onClick={handleGoHome}>
+                    <img src="/logo.png" className="w-11 h-11 md:w-12 md:h-12 brightness-0 invert object-contain group-hover:scale-105 transition-transform" alt="İSTE Logo" />
+                    <h1 className="text-2xl font-black text-white tracking-tighter hidden sm:block">Akıl <span className="text-red-500">Kütüphanesi</span></h1>
                 </div>
 
                 <div className="flex items-center gap-4 relative">
