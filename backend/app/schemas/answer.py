@@ -8,9 +8,10 @@ class QuestionInfo(BaseModel):
     id: int
     title: str
     content: str
-    image_url: Optional[str] = None # <-- BURADA DA OLMALI
+    image_url: Optional[str] = None
     created_at: datetime
     owner_id: int
+    owner: Optional[UserResponse] = None
     
     class Config:
         from_attributes = True

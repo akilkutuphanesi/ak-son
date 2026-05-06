@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
     X, MessageSquare, Edit2, Save, Trash2, Loader2, 
-    Maximize2, Send 
+    Maximize2, Send, ArrowLeft
 } from 'lucide-react';
 
 export default function QuestionDetailModal({
@@ -34,7 +34,9 @@ export default function QuestionDetailModal({
     newAnswer,
     setNewAnswer,
     handleSendAnswer,
-    isAnswerSubmitting
+    isAnswerSubmitting,
+    returnToUser,
+    handleBackToUserModal
 }) {
     if (!selectedQuestion) return null;
 
@@ -42,9 +44,16 @@ export default function QuestionDetailModal({
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <MessageSquare size={16} className="text-red-500" /> Soru Detayı
-                    </h3>
+                    <div className="flex items-center gap-3">
+                        {returnToUser && (
+                            <button onClick={handleBackToUserModal} className="bg-white/5 hover:bg-white/20 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest border border-white/10 hover:border-white/20 shadow-sm">
+                                <ArrowLeft size={14} /> Geri
+                            </button>
+                        )}
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <MessageSquare size={16} className="text-red-500" /> Soru Detayı
+                        </h3>
+                    </div>
                     <div className="flex items-center gap-2">
                         {userProfile?.email === selectedQuestion.owner?.email && (
                             <>

@@ -98,6 +98,8 @@ export default function Dashboard() {
     const [favoritedIds, setFavoritedIds] = useState(new Set());
     const [viewedUser, setViewedUser] = useState(null);
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [returnToUser, setReturnToUser] = useState(null);
+    const [userModalState, setUserModalState] = useState({ activeTab: 'questions', scrollTop: 0 });
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -230,6 +232,7 @@ export default function Dashboard() {
             if (res.ok) {
                 const data = await res.json();
                 setViewedUser(data);
+                setUserModalState({ activeTab: 'questions', scrollTop: 0 });
                 setIsUserModalOpen(true);
             }
         } catch (error) { console.error(error); }
@@ -471,21 +474,47 @@ export default function Dashboard() {
     };
 
     const openQuestionModal = (question) => { if (!question) return; setSelectedQuestion(question); fetchAnswersForQuestion(question.id); };
-    const closeQuestionModal = () => { setSelectedQuestion(null); setNewAnswer(""); };
+    const closeQuestionModal = () => { setSelectedQuestion(null); setNewAnswer(""); setReturnToUser(null); };
+
+    const handleBackToUserModal = () => {
+        setSelectedQuestion(null);
+        setNewAnswer("");
+        if (returnToUser) {
+            setViewedUser(returnToUser);
+            setIsUserModalOpen(true);
+            setReturnToUser(null);
+        }
+    };
 
     const handleNotificationClick = async (n) => {
         setIsNotificationsOpen(false);
         try { await fetch(`${API_BASE}/notifications/mark-as-read`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } }); setUnreadCount(0); fetchNotifications(token); } catch (e) { }
         if (n.question_id) {
-            const localQuestion = questions.find(item => item.id === n.question_id);
-            if (localQuestion) { openQuestionModal(localQuestion); }
-            else {
-                setIsLoading(true);
-                try {
-                    const response = await fetch(`${API_BASE}/questions/${n.question_id}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (response.ok) { const questionData = await response.json(); openQuestionModal(questionData); }
-                    else { toast.error("Bu soru silinmiş veya ulaşılamıyor."); }
-                } catch (error) { console.error(error); } finally { setIsLoading(false); }
+            handleOpenQuestionFromModal(n.question_id);
+        }
+    };
+
+    const handleOpenQuestionFromModal = async (questionId, activeTab = 'questions', scrollTop = 0) => {
+        setUserModalState({ activeTab, scrollTop });
+        setReturnToUser(viewedUser);
+        setIsUserModalOpen(false);
+        const localQuestion = questions.find(item => item.id === questionId);
+        if (localQuestion) { 
+            openQuestionModal(localQuestion); 
+        } else {
+            setIsLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/questions/${questionId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) { 
+                    const questionData = await response.json(); 
+                    openQuestionModal(questionData); 
+                } else { 
+                    toast.error("Bu soru silinmiş veya ulaşılamıyor."); 
+                }
+            } catch (error) { 
+                console.error(error); 
+            } finally { 
+                setIsLoading(false); 
             }
         }
     };
@@ -686,6 +715,9 @@ export default function Dashboard() {
                 isOpen={isUserModalOpen}
                 onClose={() => setIsUserModalOpen(false)}
                 viewedUser={viewedUser}
+                onQuestionClick={handleOpenQuestionFromModal}
+                initialTab={userModalState.activeTab}
+                initialScroll={userModalState.scrollTop}
             />
 
             {/* --- AVATAR SEÇİM MODALI --- */}
@@ -762,6 +794,8 @@ export default function Dashboard() {
                 setNewAnswer={setNewAnswer}
                 handleSendAnswer={handleSendAnswer}
                 isAnswerSubmitting={isAnswerSubmitting}
+                returnToUser={returnToUser}
+                handleBackToUserModal={handleBackToUserModal}
             />
 
             {/* --- PROFİL AYARLARI MODALI --- */}
