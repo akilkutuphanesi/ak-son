@@ -103,7 +103,8 @@ def read_users_me(current_user: User = Depends(get_current_user), db: Session = 
         question_count=len(user_questions),
         answer_count=len(user_answers),
         reputation=calculated_reputation,
-        badge=badge
+        badge=badge,
+        is_admin=current_user.is_admin
     )
 
 # 4.1. PROFİL BİLGİLERİNİ GÜNCELLEME (Avatar, İsim)
