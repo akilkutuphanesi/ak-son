@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-<<<<<<< HEAD
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2, BookOpen, Zap, Coffee, Timer, Layers } from 'lucide-react';
-=======
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2, Flame, Award, Eye, Trophy, Medal } from 'lucide-react';
->>>>>>> 61d0269d5148a935d0e5c851cadc9bdb7bfe1a27
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2, BookOpen, Zap, Coffee, Timer, Layers, Flame, Award, Eye, Trophy, Medal } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
 import UserModal from '../components/UserModal';
@@ -507,10 +503,10 @@ export default function Dashboard() {
         }
     };
 
-    const openQuestionModal = async (question) => { 
-        if (!question) return; 
-        setSelectedQuestion(question); 
-        fetchAnswersForQuestion(question.id); 
+    const openQuestionModal = async (question) => {
+        if (!question) return;
+        setSelectedQuestion(question);
+        fetchAnswersForQuestion(question.id);
         try {
             const res = await fetch(`${API_BASE}/questions/${question.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (res.ok) {
@@ -548,22 +544,22 @@ export default function Dashboard() {
         setReturnToUser(viewedUser);
         setIsUserModalOpen(false);
         const localQuestion = questions.find(item => item.id === questionId);
-        if (localQuestion) { 
-            openQuestionModal(localQuestion); 
+        if (localQuestion) {
+            openQuestionModal(localQuestion);
         } else {
             setIsLoading(true);
             try {
                 const response = await fetch(`${API_BASE}/questions/${questionId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (response.ok) { 
-                    const questionData = await response.json(); 
-                    openQuestionModal(questionData); 
-                } else { 
-                    toast.error("Bu soru silinmiş veya ulaşılamıyor."); 
+                if (response.ok) {
+                    const questionData = await response.json();
+                    openQuestionModal(questionData);
+                } else {
+                    toast.error("Bu soru silinmiş veya ulaşılamıyor.");
                 }
-            } catch (error) { 
-                console.error(error); 
-            } finally { 
-                setIsLoading(false); 
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoading(false);
             }
         }
     };
@@ -675,7 +671,7 @@ export default function Dashboard() {
         displayContent = [...questions]
             .filter(q => {
                 const qDate = new Date(q.created_at);
-                const diffDays = Math.ceil(Math.abs(now - qDate) / (1000 * 60 * 60 * 24)); 
+                const diffDays = Math.ceil(Math.abs(now - qDate) / (1000 * 60 * 60 * 24));
                 return diffDays <= 7; // Son 7 gün içindeki sorular
             })
             .sort((a, b) => {
@@ -948,75 +944,75 @@ export default function Dashboard() {
 
                     {viewMode === 'feed' && selectedDepartment === "Tümü" && (
                         <>
-                        {/* ÇALIŞMA ODALARI WIDGET */}
-                        <Link to="/study-rooms" className="block group">
-                            <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 backdrop-blur-md border border-purple-500/20 hover:border-purple-500/40 rounded-2xl px-5 py-4 shadow-lg relative overflow-hidden transition-all hover:-translate-y-0.5">
-                                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none" />
-                                <div className="flex items-center justify-between relative z-10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-9 w-9 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                                            <BookOpen size={17} className="text-purple-400" />
+                            {/* ÇALIŞMA ODALARI WIDGET */}
+                            <Link to="/study-rooms" className="block group">
+                                <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 backdrop-blur-md border border-purple-500/20 hover:border-purple-500/40 rounded-2xl px-5 py-4 shadow-lg relative overflow-hidden transition-all hover:-translate-y-0.5">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none" />
+                                    <div className="flex items-center justify-between relative z-10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                                                <BookOpen size={17} className="text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-bold text-sm">Dijital Çalışma Odaları</p>
+                                                <p className="text-slate-500 text-xs flex items-center gap-2">
+                                                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />3 aktif oda</span>
+                                                    <span>•</span>
+                                                    <span className="flex items-center gap-1"><Timer size={10} className="text-purple-400" />28 kişi çalışıyor</span>
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-white font-bold text-sm">Dijital Çalışma Odaları</p>
-                                            <p className="text-slate-500 text-xs flex items-center gap-2">
-                                                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />3 aktif oda</span>
-                                                <span>•</span>
-                                                <span className="flex items-center gap-1"><Timer size={10} className="text-purple-400" />28 kişi çalışıyor</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="hidden sm:flex gap-2">
-                                            <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg">
-                                                <Zap size={9} /> Algoritma
-                                            </span>
-                                            <span className="flex items-center gap-1 text-[10px] font-bold bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2.5 py-1 rounded-lg">
-                                                <Coffee size={9} /> Calculus
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-purple-400 font-bold text-xs group-hover:translate-x-1 transition-transform">
-                                            Katıl →
+                                        <div className="flex items-center gap-3">
+                                            <div className="hidden sm:flex gap-2">
+                                                <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg">
+                                                    <Zap size={9} /> Algoritma
+                                                </span>
+                                                <span className="flex items-center gap-1 text-[10px] font-bold bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2.5 py-1 rounded-lg">
+                                                    <Coffee size={9} /> Calculus
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-purple-400 font-bold text-xs group-hover:translate-x-1 transition-transform">
+                                                Katıl →
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Link>
-                        {/* SORU OLUŞTUR KUTUSU */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="flex gap-4">
-                                {selectedAvatarUrl ? (
-                                    <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-12 w-12 rounded-full border border-white/10 object-cover shadow-lg flex-shrink-0 bg-[#0d1117]" />
-                                ) : (
-                                    <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div>
-                                )}
-                                <div className="flex-1 space-y-3">
-                                    <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
-                                    <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
-                                    {imagePreview && (
-                                        <div className="relative inline-block mt-2">
-                                            <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20 shadow-md" />
-                                            <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 border border-[#0a0f1d] hover:scale-110 transition-transform"><X size={12} /></button>
-                                        </div>
+                            </Link>
+                            {/* SORU OLUŞTUR KUTUSU */}
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="flex gap-4">
+                                    {selectedAvatarUrl ? (
+                                        <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-12 w-12 rounded-full border border-white/10 object-cover shadow-lg flex-shrink-0 bg-[#0d1117]" />
+                                    ) : (
+                                        <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div>
                                     )}
-                                    <div className="flex flex-wrap justify-between items-center gap-2 pt-2">
-                                        <div className="flex items-center gap-1 flex-wrap">
-                                            <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
-                                            <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
-                                                <Paperclip size={15} /> <span className="hidden sm:inline">Fotoğraf</span><span className="sm:hidden">Ekle</span>
-                                            </button>
-                                            <button onClick={startCamera} className="flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
-                                                <Camera size={15} /> Kamera
+                                    <div className="flex-1 space-y-3">
+                                        <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
+                                        <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
+                                        {imagePreview && (
+                                            <div className="relative inline-block mt-2">
+                                                <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20 shadow-md" />
+                                                <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 border border-[#0a0f1d] hover:scale-110 transition-transform"><X size={12} /></button>
+                                            </div>
+                                        )}
+                                        <div className="flex flex-wrap justify-between items-center gap-2 pt-2">
+                                            <div className="flex items-center gap-1 flex-wrap">
+                                                <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                                                <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
+                                                    <Paperclip size={15} /> <span className="hidden sm:inline">Fotoğraf</span><span className="sm:hidden">Ekle</span>
+                                                </button>
+                                                <button onClick={startCamera} className="flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
+                                                    <Camera size={15} /> Kamera
+                                                </button>
+                                            </div>
+                                            <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95 flex-shrink-0">
+                                                {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
                                             </button>
                                         </div>
-                                        <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95 flex-shrink-0">
-                                            {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
-                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         </>
                     )}
 
@@ -1031,27 +1027,27 @@ export default function Dashboard() {
                                     <p className="text-sm text-slate-400">Platformda en çok yardımcı olan ve puan toplayan öğrenciler.</p>
                                 </div>
                             </div>
-                            
+
                             {isLoading ? <Loader2 className="animate-spin mx-auto text-yellow-500 my-20" size={40} /> : leaderboardData.length > 0 ? (
                                 <div className="space-y-4">
                                     {leaderboardData.map((user, index) => (
                                         <div key={user.id} className="bg-[#121723] border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-[#151b29] transition-all relative overflow-hidden group">
                                             {/* Rank Indicator */}
                                             <div className="flex-shrink-0 w-10 flex justify-center">
-                                                {index === 0 ? <Medal size={32} className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" /> : 
-                                                 index === 1 ? <Medal size={28} className="text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]" /> :
-                                                 index === 2 ? <Medal size={28} className="text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]" /> :
-                                                 <span className="text-xl font-black text-slate-500 group-hover:text-slate-400">#{index + 1}</span>}
+                                                {index === 0 ? <Medal size={32} className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" /> :
+                                                    index === 1 ? <Medal size={28} className="text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]" /> :
+                                                        index === 2 ? <Medal size={28} className="text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]" /> :
+                                                            <span className="text-xl font-black text-slate-500 group-hover:text-slate-400">#{index + 1}</span>}
                                             </div>
-                                            
+
                                             {/* Avatar */}
-                                            <div 
+                                            <div
                                                 className={`h-12 w-12 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-lg text-slate-300 overflow-hidden relative flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-yellow-500/50 transition-all`}
                                                 onClick={(e) => openUserProfile(user.id, e)}
                                             >
                                                 {user.avatar_url ? <img src={user.avatar_url} alt="Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(user.display_name || user.email || "?")}
                                             </div>
-                                            
+
                                             {/* Info */}
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-white font-bold text-base cursor-pointer hover:text-yellow-400 transition-colors flex items-center gap-2" onClick={(e) => openUserProfile(user.id, e)}>
@@ -1060,7 +1056,7 @@ export default function Dashboard() {
                                                 </h3>
                                                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">{user.department || "Genel"}</p>
                                             </div>
-                                            
+
                                             {/* Stats */}
                                             <div className="flex flex-col items-end gap-1">
                                                 <div className="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl">
@@ -1078,88 +1074,88 @@ export default function Dashboard() {
 
                     {viewMode !== 'leaderboard' && (
                         <div className="space-y-6 pb-24">
-                        <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2">
-                            {viewMode === 'trending' ? (
-                                <Flame size={16} className="text-orange-500 animate-pulse drop-shadow-[0_0_10px_orange]" />
-                            ) : (
-                                <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
-                            )}
-                            {viewMode === 'trending' ? "🔥 Haftanın Popülerleri" : (viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (viewMode === 'favorites' ? "❤️ Favorilerim" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))))}
-                            <span className="text-slate-600 ml-1">({displayContent.length})</span>
-                        </h2>
-                        {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40} /> : displayContent.length > 0 ? (
-                            displayContent.map(item => (
-                                viewMode === 'my_answers' ? (
-                                    <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span>
-                                                <h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>{item.question?.title || `Soru ID: #${item.question_id}`}</h4>
-                                            </div>
-                                            <span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
-                                        </div>
-                                        <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative shadow-inner">
-                                            <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div>
-                                            <p className="text-slate-300 italic text-sm">"{item.content}"</p>
-                                        </div>
-                                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
-                                            <button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12} /></button>
-                                        </div>
-                                    </div>
+                            <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-6 ml-2">
+                                {viewMode === 'trending' ? (
+                                    <Flame size={16} className="text-orange-500 animate-pulse drop-shadow-[0_0_10px_orange]" />
                                 ) : (
-                                    <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group relative">
-                                        {userProfile?.email === item.owner?.email && (
-                                            <button onClick={(e) => handleDeleteQuestion(item.id, e)} className="absolute top-4 right-4 p-2 rounded-full bg-[#1a1f2e] text-slate-500 hover:bg-red-500 hover:text-white border border-white/5 hover:border-red-500 transition-all z-20 shadow-lg" title="Soruyu Sil">
-                                                {isDeletingQuestion === item.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                                            </button>
-                                        )}
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div
-                                                    className={`h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative flex-shrink-0 ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:ring-2 hover:ring-red-500/50 transition-all' : ''}`}
-                                                    onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}
-                                                    title={item.owner?.email !== userProfile?.email ? 'Profili Görüntüle' : ''}
-                                                >
-                                                    {item.owner?.email === userProfile?.email ? (
-                                                        selectedAvatarUrl ? <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(displayName)
-                                                    ) : (item.owner?.avatar_url ? <img src={item.owner.avatar_url} alt="Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(item.owner?.display_name || item.owner?.email || "?"))}
+                                    <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></div>
+                                )}
+                                {viewMode === 'trending' ? "🔥 Haftanın Popülerleri" : (viewMode === 'my_questions' ? "Sorduğum Sorular" : (viewMode === 'my_answers' ? "Cevaplarım" : (viewMode === 'favorites' ? "❤️ Favorilerim" : (selectedDepartment === "Tümü" ? "Tüm Sorular" : selectedDepartment))))}
+                                <span className="text-slate-600 ml-1">({displayContent.length})</span>
+                            </h2>
+                            {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40} /> : displayContent.length > 0 ? (
+                                displayContent.map(item => (
+                                    viewMode === 'my_answers' ? (
+                                        <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex-1">
+                                                    <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span>
+                                                    <h4 className="text-white font-bold mt-2 text-lg hover:text-red-400 cursor-pointer transition-colors" onClick={() => openQuestionModal(item.question)}>{item.question?.title || `Soru ID: #${item.question_id}`}</h4>
                                                 </div>
-                                                <div className="min-w-0"><h3 className={`text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:text-red-400 transition-colors' : ''}`} onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}>{item.owner?.email === userProfile?.email ? displayName : (item.owner ? (item.owner.display_name || item.owner.email.split('@')[0]) : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
+                                                <span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                             </div>
-                                            <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative shadow-inner">
+                                                <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div>
+                                                <p className="text-slate-300 italic text-sm">"{item.content}"</p>
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
+                                                <button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12} /></button>
+                                            </div>
                                         </div>
-                                        <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
-                                        <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
-                                        {item.image_url && (
-                                            <div className="relative mb-6 rounded-xl overflow-hidden border border-white/10 bg-black/20 flex justify-center group/img cursor-pointer shadow-inner" onClick={(e) => { e.stopPropagation(); setFullScreenImage(item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`); }}>
-                                                <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                                    <Maximize2 className="text-white drop-shadow-lg" size={32} />
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
-                                            <div className="flex gap-2">
-                                                <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                                                    <MessageCircle size={14} className="text-blue-400" />
-                                                    <span>{item.answer_count || 0}</span>
+                                    ) : (
+                                        <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group relative">
+                                            {userProfile?.email === item.owner?.email && (
+                                                <button onClick={(e) => handleDeleteQuestion(item.id, e)} className="absolute top-4 right-4 p-2 rounded-full bg-[#1a1f2e] text-slate-500 hover:bg-red-500 hover:text-white border border-white/5 hover:border-red-500 transition-all z-20 shadow-lg" title="Soruyu Sil">
+                                                    {isDeletingQuestion === item.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                                 </button>
-                                                <button onClick={(e) => handleToggleFavorite(item.id, e)} className={`text-xs font-bold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg ${favoritedIds.has(item.id) ? 'text-red-500 bg-red-500/10' : 'text-slate-500 bg-white/5 hover:text-red-400 hover:bg-red-500/10'}`} title="Favorilere Ekle">
-                                                    <Heart size={14} fill={favoritedIds.has(item.id) ? 'currentColor' : 'none'} />
-                                                    <span>{item.favorite_count !== undefined ? (item.favorite_count + (favoritedIds.has(item.id) && !item.is_favorited ? 1 : (!favoritedIds.has(item.id) && item.is_favorited ? -1 : 0))) : 0}</span>
-                                                </button>
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 text-slate-500 text-xs font-bold" title="Görüntülenme">
-                                                    <Eye size={14} className="text-blue-400/50" />
-                                                    <span>{item.view_count || 0}</span>
+                                            )}
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div
+                                                        className={`h-10 w-10 bg-[#1a1f2e] rounded-full flex items-center justify-center font-bold border border-white/10 text-sm text-slate-300 overflow-hidden relative flex-shrink-0 ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:ring-2 hover:ring-red-500/50 transition-all' : ''}`}
+                                                        onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}
+                                                        title={item.owner?.email !== userProfile?.email ? 'Profili Görüntüle' : ''}
+                                                    >
+                                                        {item.owner?.email === userProfile?.email ? (
+                                                            selectedAvatarUrl ? <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(displayName)
+                                                        ) : (item.owner?.avatar_url ? <img src={item.owner.avatar_url} alt="Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(item.owner?.display_name || item.owner?.email || "?"))}
+                                                    </div>
+                                                    <div className="min-w-0"><h3 className={`text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:text-red-400 transition-colors' : ''}`} onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}>{item.owner?.email === userProfile?.email ? displayName : (item.owner ? (item.owner.display_name || item.owner.email.split('@')[0]) : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
                                                 </div>
+                                                <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                             </div>
-                                            <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all">İncele & Cevapla</button>
+                                            <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
+                                            <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
+                                            {item.image_url && (
+                                                <div className="relative mb-6 rounded-xl overflow-hidden border border-white/10 bg-black/20 flex justify-center group/img cursor-pointer shadow-inner" onClick={(e) => { e.stopPropagation(); setFullScreenImage(item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`); }}>
+                                                    <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                        <Maximize2 className="text-white drop-shadow-lg" size={32} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                                                        <MessageCircle size={14} className="text-blue-400" />
+                                                        <span>{item.answer_count || 0}</span>
+                                                    </button>
+                                                    <button onClick={(e) => handleToggleFavorite(item.id, e)} className={`text-xs font-bold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg ${favoritedIds.has(item.id) ? 'text-red-500 bg-red-500/10' : 'text-slate-500 bg-white/5 hover:text-red-400 hover:bg-red-500/10'}`} title="Favorilere Ekle">
+                                                        <Heart size={14} fill={favoritedIds.has(item.id) ? 'currentColor' : 'none'} />
+                                                        <span>{item.favorite_count !== undefined ? (item.favorite_count + (favoritedIds.has(item.id) && !item.is_favorited ? 1 : (!favoritedIds.has(item.id) && item.is_favorited ? -1 : 0))) : 0}</span>
+                                                    </button>
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 text-slate-500 text-xs font-bold" title="Görüntülenme">
+                                                        <Eye size={14} className="text-blue-400/50" />
+                                                        <span>{item.view_count || 0}</span>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => openQuestionModal(item)} className="text-xs font-black px-5 py-2 rounded-xl border border-red-500/20 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all">İncele & Cevapla</button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )
-                            ))
-                        ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center shadow-inner"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>}
-                    </div>
+                                    )
+                                ))
+                            ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center shadow-inner"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>}
+                        </div>
                     )}
                 </main>
             </div>
