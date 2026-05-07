@@ -20,8 +20,9 @@ cloudinary.config(
 )
 # Tüm modelleri doğru sırayla import et (SQLAlchemy mapper init için kritik)
 from app.models import user, question, answer, notification, favorite  # noqa: F401
+from app.models import study_room, room_participant, room_message, room_session, room_report  # noqa: F401
 
-from app.routers import auth_router, question_router, answer_router, notification_router, user_router, favorite_router, admin_router
+from app.routers import auth_router, question_router, answer_router, notification_router, user_router, favorite_router, admin_router, room_router
 from app.core.database import engine, Base
 from sqlalchemy import text
 
@@ -87,6 +88,7 @@ app.include_router(notification_router.router)
 app.include_router(user_router.router)
 app.include_router(favorite_router.router)
 app.include_router(admin_router.router)
+app.include_router(room_router.router)
 
 @app.get("/")
 def home():
