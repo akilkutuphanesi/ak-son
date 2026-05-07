@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2 } from 'lucide-react';
+import { MessageCircle, User, LogOut, ChevronDown, Bell, Filter, X, Info, Send, MapPin, Loader2, GraduationCap, Settings, Save, ArrowLeft, Maximize2, ExternalLink, MessageSquare, Trash2, Image as ImageIcon, Paperclip, Camera, CheckCheck, Heart, Edit2, BookOpen, Zap, Coffee, Timer, Layers } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import ThemeToggle from '../components/ThemeToggle';
 import UserModal from '../components/UserModal';
 import AvatarPickerModal from '../components/AvatarPickerModal';
 import CameraModal from '../components/CameraModal';
@@ -607,6 +608,21 @@ export default function Dashboard() {
                     <div className="hidden md:flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full">
                         <MapPin size={14} className="text-blue-400" /><span className="text-blue-400 font-bold text-[10px] uppercase tracking-widest">İSTE Kütüphane</span>
                     </div>
+                    {/* ÇALIŞMA ODALARI HIZLI ERİŞİM */}
+                    <Link to="/study-rooms"
+                        className="hidden md:flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <BookOpen size={13} />
+                        <span>Çalışma Odaları</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    </Link>
+                    {/* AKILLI AKIŞ */}
+                    <Link to="/cards-demo"
+                        className="hidden lg:flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <Layers size={13} />
+                        <span>Akıllı Akış</span>
+                    </Link>
+                    {/* TEMA TOGGLE */}
+                    <ThemeToggle size="sm" />
                     <div className="relative">
                         <button onClick={toggleNotifications} className={`p-2.5 rounded-full border transition-all ${isNotificationsOpen ? 'bg-red-600/20 text-red-500 border-red-500' : 'bg-white/5 border-white/10'}`}>
                             <Bell size={20} />{unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0a0f1d] animate-bounce">{unreadCount}</span>}
@@ -817,6 +833,42 @@ export default function Dashboard() {
                     )}
 
                     {viewMode === 'feed' && selectedDepartment === "Tümü" && (
+                        <>
+                        {/* ÇALIŞMA ODALARI WIDGET */}
+                        <Link to="/study-rooms" className="block group">
+                            <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 backdrop-blur-md border border-purple-500/20 hover:border-purple-500/40 rounded-2xl px-5 py-4 shadow-lg relative overflow-hidden transition-all hover:-translate-y-0.5">
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none" />
+                                <div className="flex items-center justify-between relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                                            <BookOpen size={17} className="text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold text-sm">Dijital Çalışma Odaları</p>
+                                            <p className="text-slate-500 text-xs flex items-center gap-2">
+                                                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />3 aktif oda</span>
+                                                <span>•</span>
+                                                <span className="flex items-center gap-1"><Timer size={10} className="text-purple-400" />28 kişi çalışıyor</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="hidden sm:flex gap-2">
+                                            <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg">
+                                                <Zap size={9} /> Algoritma
+                                            </span>
+                                            <span className="flex items-center gap-1 text-[10px] font-bold bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2.5 py-1 rounded-lg">
+                                                <Coffee size={9} /> Calculus
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-purple-400 font-bold text-xs group-hover:translate-x-1 transition-transform">
+                                            Katıl →
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                        {/* SORU OLUŞTUR KUTUSU */}
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
                             <div className="flex gap-4">
@@ -851,6 +903,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
+                        </>
                     )}
 
                     <div className="space-y-6 pb-24">

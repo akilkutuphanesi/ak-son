@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, BarChart, Settings, Search, Bell, LogOut, User as UserIcon, CheckCircle2, BellOff, ChevronDown, CheckCheck, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, BarChart, Settings, Search, Bell, LogOut, User as UserIcon, CheckCircle2, BellOff, ChevronDown, CheckCheck, ShieldAlert, BookOpen } from 'lucide-react';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -64,11 +65,12 @@ export default function AdminLayout() {
   const getInitial = (name) => name ? name.charAt(0).toUpperCase() : "A";
 
   const menuItems = [
-    { id: 'dashboard', path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'users', path: '/admin/users', icon: Users, label: 'Kullanıcı Yönetimi' },
-    { id: 'content', path: '/admin/content', icon: FileText, label: 'İçerik Denetimi' },
-    { id: 'reports', path: '/admin/reports', icon: BarChart, label: 'Raporlar & Analiz' },
-    { id: 'settings', path: '/admin/settings', icon: Settings, label: 'Sistem Ayarları' },
+    { id: 'dashboard', path: '/admin',          icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'users',     path: '/admin/users',     icon: Users,           label: 'Kullanıcı Yönetimi' },
+    { id: 'content',   path: '/admin/content',   icon: FileText,        label: 'İçerik Denetimi' },
+    { id: 'rooms',     path: '/admin/rooms',     icon: BookOpen,        label: 'Çalışma Odaları' },
+    { id: 'reports',   path: '/admin/reports',   icon: BarChart,        label: 'Raporlar & Analiz' },
+    { id: 'settings',  path: '/admin/settings',  icon: Settings,        label: 'Sistem Ayarları' },
   ];
 
   return (
@@ -159,6 +161,9 @@ export default function AdminLayout() {
             <div className="hidden md:flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-full">
                 <ShieldAlert size={14} className="text-red-400" /><span className="text-red-400 font-bold text-[10px] uppercase tracking-widest">Yetkili Erişim</span>
             </div>
+
+            {/* GECE LAMBASI TOGGLE */}
+            <ThemeToggle size="sm" label={false} />
 
             {/* BİLDİRİMLER */}
             <div className="relative">

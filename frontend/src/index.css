@@ -1,6 +1,63 @@
 @import "tailwindcss";
 
 /* ============================================
+   TEMA SİSTEMİ — DARK / LIGHT MODE
+   Dark: Varsayılan koyu mod (#0a0f1d tabanlı)
+   Light: Aydınlık mod (beyaz/gri tonlar)
+   ============================================ */
+
+/* ── Light Mode Ana Mekanizması ────────────────
+   Tailwind hardcoded renk sınıfları CSS var ile
+   override edilemez. Bu yüzden body üzerine CSS
+   filter:invert kullanıyoruz — site tersine çevrilir
+   ve doğal bir açık tema oluşur.
+   Görseller, logolar ve gradyanlar çift-invert ile
+   orijinal renklerine döndürülür.
+   ──────────────────────────────────────────────── */
+
+/* Mod geçiş animasyonu — 350ms yumuşak */
+html {
+  transition: filter 0.35s ease;
+}
+
+/* ══ LIGHT MODE ══ */
+html.light-mode {
+  filter: invert(1) hue-rotate(180deg);
+  /* Ek parlaklık ve kontrast ayarı */
+  background-color: #ffffff;
+}
+
+/* Görseller, videolar ve ikonlu SVG'ler:
+   Çift-invert → orijinal renklerine döner */
+html.light-mode img,
+html.light-mode video,
+html.light-mode iframe,
+html.light-mode canvas,
+html.light-mode [class*="brightness-0"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Logo: Siyah-beyaz invert logosu ışık modunda bozulmasın */
+html.light-mode img[class*="brightness-0"] {
+  filter: invert(1) hue-rotate(180deg) brightness(0) invert(1);
+}
+
+/* Kırmızı vurgular light modda doğal görünsün */
+html.light-mode .text-red-600,
+html.light-mode .text-red-500,
+html.light-mode .text-red-400 {
+  color: #b91c1c;
+}
+
+/* Scrollbar light modda */
+html.light-mode ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+html.light-mode ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================
    GLOBAL RESPONSIVE FIXES
    Tüm sayfalarda yatay kaymayı engeller
    ============================================ */
@@ -12,24 +69,24 @@
 html, body {
   overflow-x: hidden;
   max-width: 100%;
-  /* Mobilde adres çubuğu kaymasını önler */
   width: 100%;
 }
 
-/* Taşan mutlak konumlu elementleri kısıtla */
 body > * {
   overflow-x: hidden;
 }
 
+/* ============================================
+   ANİMASYONLAR
+   ============================================ */
+
 @keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+  100% { transform: translateX(100%); }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
+  50%       { transform: translateY(-15px); }
 }
 .animate-float {
   animation: float 4s ease-in-out infinite;
@@ -38,19 +95,17 @@ body > * {
   animation: float 5s ease-in-out 2.5s infinite;
 }
 
-
 /* --- Hareketli Grid Arka Planı --- */
 .bg-grid-slate-900\/\[0\.04\] {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(15 23 42 / 0.04)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
 }
 
 @keyframes moving-grid {
-  0% { transform: translateY(0); }
+  0%   { transform: translateY(0); }
   100% { transform: translateY(-32px); }
 }
-
 .animate-grid-fade-up {
   animation: moving-grid 20s linear infinite;
   mask-image: linear-gradient(to bottom, transparent, black, transparent);
   -webkit-mask-image: linear-gradient(to bottom, transparent, black, transparent);
-}
+}
