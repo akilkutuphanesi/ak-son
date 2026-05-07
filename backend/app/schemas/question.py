@@ -22,8 +22,9 @@ class QuestionResponse(QuestionBase):
     # --- YENİ EKLENEN KISIM ---
     image_url: Optional[str] = None
     answer_count: Optional[int] = 0
-    favorite_count: Optional[int] = 0
-    is_favorited: Optional[bool] = False
+    favorite_count: int = 0
+    is_favorited: bool = False
+    view_count: int = 0
     # --------------------------
     owner: Optional[UserResponse] = None
 

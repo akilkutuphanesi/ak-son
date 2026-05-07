@@ -12,6 +12,43 @@ from app.routers.auth_router import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
+# Liderlik Tablosu
+@router.get("/leaderboard", response_model=List[UserPublicProfile])
+def get_leaderboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    users = user_repo.get_all_users_with_relations(db)
+    
+    leaderboard = []
+    for user in users:
+        calculated_reputation = (len(user.questions) * 2) + (len(user.answers) * 5) + sum(15 for a in user.answers if getattr(a, 'is_best_answer', False))
+        
+        if calculated_reputation > 0:
+            badge = "Çaylak"
+            if calculated_reputation >= 200: badge = "Ordinaryüs"
+            elif calculated_reputation >= 100: badge = "Usta"
+            elif calculated_reputation >= 50: badge = "Bilgin"
+            elif calculated_reputation >= 20: badge = "Çırak"
+            
+            leaderboard.append(UserPublicProfile(
+                id=user.id,
+                email=user.email,
+                display_name=user.display_name,
+                avatar_url=user.avatar_url,
+                department=user.department,
+                question_count=len(user.questions),
+                answer_count=len(user.answers),
+                reputation=calculated_reputation,
+                badge=badge
+            ))
+            
+    # Reputation puana göre büyükten küçüğe sırala
+    leaderboard.sort(key=lambda x: x.reputation, reverse=True)
+    
+    # En iyi 20 kişiyi döndür
+    return leaderboard[:20]
+
 # 1. KULLANICI PROFİLİ
 @router.get("/{user_id}", response_model=UserPublicProfile)
 def get_user_profile(
@@ -27,6 +64,14 @@ def get_user_profile(
     user_questions = question_repo.get_questions_by_owner(db, user_id)
     user_answers = answer_repo.get_answers_by_owner(db, user_id)
     
+    calculated_reputation = (len(user_questions) * 2) + (len(user_answers) * 5) + sum(15 for a in user_answers if getattr(a, 'is_best_answer', False))
+    
+    badge = "Çaylak"
+    if calculated_reputation >= 200: badge = "Ordinaryüs"
+    elif calculated_reputation >= 100: badge = "Usta"
+    elif calculated_reputation >= 50: badge = "Bilgin"
+    elif calculated_reputation >= 20: badge = "Çırak"
+    
     return UserPublicProfile(
         id=user.id,
         email=user.email,
@@ -34,7 +79,9 @@ def get_user_profile(
         avatar_url=user.avatar_url,
         department=user.department,
         question_count=len(user_questions),
-        answer_count=len(user_answers)
+        answer_count=len(user_answers),
+        reputation=calculated_reputation,
+        badge=badge
     )
 
 # 2. KULLANICININ SORULARI

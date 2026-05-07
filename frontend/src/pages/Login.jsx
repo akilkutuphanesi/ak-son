@@ -14,13 +14,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // --- TEST İÇİN KORSAN KAPI (BACKEND'İ ATLAR) ---
-    if (email === 'admin' || email === 'admin@iste.edu.tr') {
-      navigate('/admin');
-      return; 
-    }
-
     setIsLoading(true);
     setError(null);
     try {
@@ -40,7 +33,21 @@ export default function Login() {
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('user_email', email);
-        navigate('/dashboard'); 
+        
+        // Kullanıcının admin olup olmadığını kontrol et
+        const meRes = await fetch(`${API_BASE}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${data.access_token}` }
+        });
+        if (meRes.ok) {
+          const userData = await meRes.json();
+          if (userData.is_admin) {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard'); // Normal kullanıcılar buraya düşecek
+          }
+        } else {
+          navigate('/dashboard'); // Fallback
+        }
       } else { 
         throw new Error("Token alınamadı."); 
       }
@@ -63,14 +70,12 @@ export default function Login() {
       </Link>
 
       <div className="relative z-10 w-full max-w-6xl grid md:grid-cols-12 bg-white/5 backdrop-blur-xl rounded-3xl md:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
-        
         {/* SOL PANEL */}
         <div className="md:col-span-5 bg-gradient-to-br from-red-700/90 to-red-950 p-7 md:p-12 text-white flex flex-col justify-center relative overflow-hidden">
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-          
           <div className="relative z-10 space-y-4 md:space-y-6 text-left">
             <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-3 md:mb-4">
-              <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" onError={(e) => { e.target.src = "https://upload.wikimedia.org/wikipedia/tr/6/66/%C4%B0skenderun_Teknik_%C3%9Cniversitesi_logo.png" }} />
+              <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" />
             </div>
             <div>
               <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] mb-3 md:mb-4">Akıl <br /> <span className="text-red-200">Kütüphanesi</span></h1>
@@ -118,6 +123,7 @@ export default function Login() {
               </button>
             </div>
 
+            {/* --- ŞİFREMİ UNUTTUM LİNKİ BURADA --- */}
             <div className="flex justify-end px-2">
               <Link to="/forgot-password" className="text-xs font-bold text-red-400/80 hover:text-red-400 transition-colors">
                 Şifremi Unuttum

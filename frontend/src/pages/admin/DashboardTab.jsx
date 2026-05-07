@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Server, Activity, CheckCircle, AlertTriangle, Users } from 'lucide-react';
 
 export default function DashboardTab() {
-  const stats = [
-    { title: "Toplam Kullanıcı", value: "1,248", increase: "+12%", color: "text-blue-400" },
-    { title: "Aktif Kullanıcı", value: "342", increase: "+5%", color: "text-emerald-400" },
-    { title: "Toplam İçerik", value: "856", increase: "+24%", color: "text-amber-400" },
-    { title: "Çözülen Sorular", value: "612", increase: "+18%", color: "text-purple-400" }
-  ];
+  const [stats, setStats] = useState([
+    { title: "Toplam Kullanıcı", value: "...", increase: "", color: "text-blue-400" },
+    { title: "Aktif Hesap", value: "...", increase: "", color: "text-emerald-400" },
+    { title: "Toplam İçerik", value: "...", increase: "", color: "text-amber-400" },
+    { title: "Çözülen Sorular", value: "...", increase: "", color: "text-purple-400" }
+  ]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_BASE}/admin/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data.stats);
+        }
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <>

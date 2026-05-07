@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -9,6 +9,7 @@ class Answer(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String(5000)) # Uzun cevaplar için
     created_at = Column(DateTime, default=datetime.now)
+    is_best_answer = Column(Boolean, default=False)
     
     question_id = Column(Integer, ForeignKey("questions.id"))
     owner_id = Column(Integer, ForeignKey("users.id"))

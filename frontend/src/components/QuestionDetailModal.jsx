@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
     X, MessageSquare, Edit2, Save, Trash2, Loader2, 
-    Maximize2, Send 
+    Maximize2, Send, ArrowLeft, CheckCircle2, Eye, Star
 } from 'lucide-react';
 
 export default function QuestionDetailModal({
@@ -34,17 +34,40 @@ export default function QuestionDetailModal({
     newAnswer,
     setNewAnswer,
     handleSendAnswer,
-    isAnswerSubmitting
+    isAnswerSubmitting,
+    returnToUser,
+    handleBackToUserModal,
+    handleAcceptAnswer
 }) {
     if (!selectedQuestion) return null;
+
+    // Cevapları sırala: En iyi cevap en üstte
+    const sortedAnswers = questionAnswers[selectedQuestion.id] 
+        ? [...questionAnswers[selectedQuestion.id]].sort((a, b) => {
+            if (a.is_best_answer) return -1;
+            if (b.is_best_answer) return 1;
+            return new Date(a.created_at) - new Date(b.created_at);
+        }) 
+        : [];
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] rounded-[2rem] border border-white/10 shadow-2xl flex flex-col relative overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <MessageSquare size={16} className="text-red-500" /> Soru Detayı
-                    </h3>
+                    <div className="flex items-center gap-3">
+                        {returnToUser && (
+                            <button onClick={handleBackToUserModal} className="bg-white/5 hover:bg-white/20 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest border border-white/10 hover:border-white/20 shadow-sm">
+                                <ArrowLeft size={14} /> Geri
+                            </button>
+                        )}
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <MessageSquare size={16} className="text-red-500" /> Soru Detayı
+                        </h3>
+                        <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1 rounded-full ml-2">
+                            <Eye size={14} className="text-blue-400" />
+                            <span className="text-[10px] font-bold text-slate-300">{selectedQuestion.view_count || 0}</span>
+                        </div>
+                    </div>
                     <div className="flex items-center gap-2">
                         {userProfile?.email === selectedQuestion.owner?.email && (
                             <>
@@ -109,8 +132,8 @@ export default function QuestionDetailModal({
                     </div>
                     <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
                     <div className="space-y-4">
-                        {questionAnswers[selectedQuestion.id]?.length > 0 ? (
-                            questionAnswers[selectedQuestion.id].map(ans => (
+                        {sortedAnswers.length > 0 ? (
+                            sortedAnswers.map(ans => (
                                 <div key={ans.id} className="flex gap-4 group/answer">
                                     <div className="flex-shrink-0 flex flex-col items-center gap-2">
                                         <div 
@@ -124,8 +147,18 @@ export default function QuestionDetailModal({
                                         <div className="w-px flex-1 bg-white/5"></div>
                                     </div>
                                     <div className="flex-1 pb-4">
-                                        <div className="bg-[#161b2c] border border-white/5 p-4 rounded-xl rounded-tl-none hover:border-white/10 shadow-lg relative">
+                                        <div className={`bg-[#161b2c] border p-4 rounded-xl rounded-tl-none shadow-lg relative transition-all ${ans.is_best_answer ? 'border-green-500/50 bg-green-500/5' : 'border-white/5 hover:border-white/10'}`}>
+                                            {ans.is_best_answer && (
+                                                <div className="absolute -top-3 left-4 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1 shadow-lg border-2 border-[#161b2c]">
+                                                    <Star size={10} className="fill-white" /> Çözüldü
+                                                </div>
+                                            )}
                                             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover/answer:opacity-100 transition-all">
+                                                {userProfile?.email === selectedQuestion.owner?.email && !ans.is_best_answer && (
+                                                    <button onClick={() => handleAcceptAnswer && handleAcceptAnswer(ans.id, selectedQuestion.id)} className="text-green-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg border border-green-500/20 bg-green-500/10 hover:bg-green-500/20 mr-2 flex items-center gap-1 transition-all" title="Çözüm Olarak İşaretle">
+                                                        <CheckCircle2 size={12} /> EN İYİ CEVAP SEÇ
+                                                    </button>
+                                                )}
                                                 {userProfile?.email === ans.owner?.email && (
                                                     editingAnswerId === ans.id ? (
                                                         <button onClick={() => handleUpdateAnswer(ans.id, selectedQuestion.id)} className="text-green-500 p-1.5 rounded-lg hover:bg-green-500/10">

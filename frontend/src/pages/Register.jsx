@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, Mail, Lock, User, ChevronDown, ArrowRight, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function Register() {
   const [searchParams] = useSearchParams();
@@ -71,6 +72,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center font-sans p-4 bg-[#0a0f1d] selection:bg-red-500/30">
+      <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '1rem' } }} />
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-900/20 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]"></div>

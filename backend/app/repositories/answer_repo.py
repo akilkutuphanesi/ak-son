@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from app.models.answer import Answer
+from app.models.question import Question
 
 def create_answer(db: Session, answer, user_id: int):
     db_answer = Answer(content=answer.content, question_id=answer.question_id, owner_id=user_id)
@@ -12,7 +13,7 @@ def get_answers_by_question(db: Session, question_id: int):
     return db.query(Answer).options(joinedload(Answer.owner)).filter(Answer.question_id == question_id).order_by(Answer.created_at.desc()).all()
 
 def get_answers_by_owner(db: Session, user_id: int):
-    return db.query(Answer).options(joinedload(Answer.question)).filter(Answer.owner_id == user_id).order_by(Answer.created_at.desc()).all()
+    return db.query(Answer).options(joinedload(Answer.question).joinedload(Question.owner)).filter(Answer.owner_id == user_id).order_by(Answer.created_at.desc()).all()
 
 # --- YENİ EKLENENLER ---
 def get_answer_by_id(db: Session, answer_id: int):

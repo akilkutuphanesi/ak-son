@@ -26,8 +26,8 @@ cloudinary.config(
 # --- RESİM YÜKLEME VE SORU OLUŞTURMA ---
 @router.post("/", response_model=QuestionResponse)
 def create_question(
-    title: str = Form(...),    
-    content: str = Form(...),  
+    title: str = Form(..., min_length=3, max_length=150),    
+    content: str = Form(..., min_length=5, max_length=5000),  
     image: UploadFile = File(None), 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
@@ -53,14 +53,19 @@ def create_question(
     )
 
 @router.get("/", response_model=List[QuestionResponse])
-def get_all_questions(db: Session = Depends(get_db)):
-    return question_repo.get_all_questions(db)
+def get_all_questions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return question_repo.get_all_questions(db, skip=skip, limit=limit)
 
 @router.get("/{question_id}", response_model=QuestionResponse)
 def get_question(question_id: int, db: Session = Depends(get_db)):
     question = question_repo.get_question_by_id(db, question_id)
     if not question:
         raise HTTPException(status_code=404, detail="Soru bulunamadı")
+        
+    question.view_count = (question.view_count or 0) + 1
+    db.commit()
+    db.refresh(question)
+    
     return question
 
 from app.schemas.question import QuestionUpdate
