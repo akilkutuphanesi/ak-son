@@ -44,6 +44,7 @@ class UserPublicProfile(BaseModel):
     answer_count: int = 0
     reputation: int = 0
     badge: str = "Çaylak"
+    is_admin: bool = False
 
     class Config:
         from_attributes = True
