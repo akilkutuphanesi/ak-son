@@ -62,7 +62,13 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:5173", "https://akil-kutuphanesi.vercel.app"], # Sadece kendi sitenden gelen isteklere izin ver (Güvenlik)
+    allow_origins=[
+        FRONTEND_URL, 
+        "http://localhost:5173", 
+        "https://akil-kutuphanesi.vercel.app",
+        "https://www.akilkutuphanesi.com",  # Canlı domainin (www ile)
+        "https://akilkutuphanesi.com"       # Canlı domainin (www olmadan)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
