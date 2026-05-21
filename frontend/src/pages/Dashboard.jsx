@@ -896,11 +896,11 @@ export default function Dashboard() {
                 saveProfileSettings={saveProfileSettings}
             />
 
-            {/* --- ALT NAVİGASYON VE FİLTRE --- */}
+            {/* --- ALT NAVİGASYON VE FİLTRE (MASAÜSTÜ) --- */}
             {viewMode === 'feed' && (
-                <div className="fixed bottom-4 md:bottom-6 left-0 md:left-4 w-full md:w-auto z-40 flex flex-row md:flex-col items-end md:items-start justify-center md:justify-start gap-2 md:gap-4 px-4 md:px-0 pointer-events-none">
+                <div className="hidden md:flex fixed bottom-6 left-4 z-40 flex-col items-start gap-4">
                     {isFilterOpen && (
-                        <div className="pointer-events-auto bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-[min(320px,calc(100vw-2rem))] max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300 absolute md:relative bottom-[110%] md:bottom-auto mb-4 md:mb-0">
+                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-[320px] max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
                             <div className="flex justify-between items-center mb-4 px-2">
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12} /> Bölüm Filtrele</h2>
                                 <button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16} /></button>
@@ -914,21 +914,20 @@ export default function Dashboard() {
                             </nav>
                         </div>
                     )}
-                    <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="pointer-events-auto group flex items-center gap-2 md:gap-3 bg-red-600 text-white px-4 md:px-6 py-3 md:py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">
+                    <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">
                         {isFilterOpen ? <X size={20} /> : <Filter size={20} />}
-                        <span className="text-xs md:text-sm max-w-[80px] md:max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
+                        <span className="text-sm max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
                         {selectedDepartment !== "Tümü" && !isFilterOpen && <div onClick={clearFilter} className="absolute -top-2 -right-2 bg-white text-red-600 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0a0f1d] hover:scale-110 shadow-sm"><X size={14} strokeWidth={3} /></div>}
                     </button>
                     {viewMode === 'feed' && (
                         <>
-                            <button onClick={() => setViewMode('trending')} className="pointer-events-auto group flex items-center gap-2 md:gap-3 bg-[#161b2c]/80 md:bg-white/5 border border-white/10 text-orange-400 px-4 md:px-6 py-3 md:py-4 rounded-full font-bold shadow-2xl hover:bg-orange-500/10 hover:border-orange-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
+                            <button onClick={() => setViewMode('trending')} className="group flex items-center gap-3 bg-white/5 border border-white/10 text-orange-400 px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-orange-500/10 hover:border-orange-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
                                 <Flame size={20} className="animate-pulse" />
-                                <span className="text-xs md:text-sm max-w-[80px] md:max-w-[100px] truncate">Popüler</span>
+                                <span className="text-sm max-w-[100px] truncate">Popüler</span>
                             </button>
-                            <button onClick={() => { setViewMode('leaderboard'); fetchLeaderboard(); }} className="pointer-events-auto group flex items-center gap-2 md:gap-3 bg-[#161b2c]/80 md:bg-white/5 border border-white/10 text-yellow-400 px-4 md:px-6 py-3 md:py-4 rounded-full font-bold shadow-2xl hover:bg-yellow-500/10 hover:border-yellow-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
+                            <button onClick={() => { setViewMode('leaderboard'); fetchLeaderboard(); }} className="group flex items-center gap-3 bg-white/5 border border-white/10 text-yellow-400 px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-yellow-500/10 hover:border-yellow-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
                                 <Trophy size={20} />
-                                <span className="text-xs md:text-sm max-w-[100px] md:max-w-[150px] truncate hidden sm:inline">Liderlik Tablosu</span>
-                                <span className="text-xs sm:hidden">Liderler</span>
+                                <span className="text-sm max-w-[150px] truncate">Liderlik Tablosu</span>
                             </button>
                         </>
                     )}
@@ -980,39 +979,67 @@ export default function Dashboard() {
                                 </div>
                             </Link>
                             {/* SORU OLUŞTUR KUTUSU */}
-                            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="flex gap-4">
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-xl relative overflow-visible group mb-8 md:mb-10">
+    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 opacity-50 group-hover:opacity-100 transition-opacity rounded-t-2xl md:rounded-t-3xl"></div><div className="flex gap-3 md:gap-4">
                                     {selectedAvatarUrl ? (
-                                        <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-12 w-12 rounded-full border border-white/10 object-cover shadow-lg flex-shrink-0 bg-[#0d1117]" />
+                                        <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-10 w-10 md:h-12 md:w-12 rounded-full border border-white/10 object-cover shadow-lg flex-shrink-0 bg-[#0d1117]" />
                                     ) : (
-                                        <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg">{getInitial(displayName)}</div>
+                                        <div className="h-10 w-10 md:h-12 md:w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg text-sm md:text-base">{getInitial(displayName)}</div>
                                     )}
-                                    <div className="flex-1 space-y-3">
-                                        <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
-                                        <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-24 transition-all"></textarea>
+                                    <div className="flex-1 space-y-2 md:space-y-3">
+                                        <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-base md:text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
+                                        <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-xs md:text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-16 md:h-24 transition-all"></textarea>
                                         {imagePreview && (
                                             <div className="relative inline-block mt-2">
-                                                <img src={imagePreview} alt="Önizleme" className="h-20 w-auto rounded-xl border border-white/20 shadow-md" />
+                                                <img src={imagePreview} alt="Önizleme" className="h-16 md:h-20 w-auto rounded-xl border border-white/20 shadow-md" />
                                                 <button onClick={removeImage} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 border border-[#0a0f1d] hover:scale-110 transition-transform"><X size={12} /></button>
                                             </div>
                                         )}
-                                        <div className="flex flex-wrap justify-between items-center gap-2 pt-2">
+                                        <div className="flex flex-wrap justify-between items-center gap-2 pt-1 md:pt-2">
                                             <div className="flex items-center gap-1 flex-wrap">
                                                 <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
-                                                <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
-                                                    <Paperclip size={15} /> <span className="hidden sm:inline">Fotoğraf</span><span className="sm:hidden">Ekle</span>
+                                                <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 text-slate-400 hover:text-blue-400 transition-colors text-[10px] md:text-[11px] font-bold uppercase tracking-wider px-2 md:px-2.5 py-1.5 md:py-2 rounded-lg hover:bg-white/5">
+                                                    <Paperclip size={14} /> <span className="hidden sm:inline">Fotoğraf</span><span className="sm:hidden">Ekle</span>
                                                 </button>
-                                                <button onClick={startCamera} className="flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg hover:bg-white/5">
-                                                    <Camera size={15} /> Kamera
+                                                <button onClick={startCamera} className="flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors text-[10px] md:text-[11px] font-bold uppercase tracking-wider px-2 md:px-2.5 py-1.5 md:py-2 rounded-lg hover:bg-white/5">
+                                                    <Camera size={14} /> Kamera
                                                 </button>
                                             </div>
-                                            <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95 flex-shrink-0">
-                                                {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
+                                            <button onClick={handleCreateQuestion} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl font-bold text-xs md:text-sm flex items-center gap-2 transition-all shadow-lg hover:shadow-red-900/40 disabled:opacity-50 active:scale-95 flex-shrink-0">
+                                                {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}{isSubmitting ? 'Yayınlanıyor...' : 'Yayınla'}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            {/* MOBİL İÇİN FİLTRE VE SEKMELER (Sadece Mobilde Görünür) */}
+                            <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-4 mb-2 mt-4 custom-scrollbar">
+                                <div className="relative">
+                                    <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="flex items-center gap-1.5 bg-red-600 text-white px-4 py-2.5 rounded-full font-bold shadow-lg shadow-red-900/20 whitespace-nowrap active:scale-95 transition-transform">
+                                        {isFilterOpen ? <X size={14} /> : <Filter size={14} />}
+                                        <span className="text-[11px]">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
+                                    </button>
+                                    {isFilterOpen && (
+                                        <div className="absolute top-full mt-2 left-0 z-50 bg-[#161b2c]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl w-[260px] max-h-64 overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-200">
+                                            <nav className="space-y-1">
+                                                {departments.map(dep => (
+                                                    <button key={dep} onClick={() => { setSelectedDepartment(dep); setIsFilterOpen(false); }} className={`w-full text-left px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2 ${selectedDepartment === dep ? "bg-red-600 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}>
+                                                        <div className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${selectedDepartment === dep ? 'bg-white' : 'bg-slate-600'}`}></div>{dep}
+                                                    </button>
+                                                ))}
+                                            </nav>
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={() => setViewMode('trending')} className="flex items-center gap-1.5 bg-white/5 border border-white/10 text-orange-400 px-4 py-2.5 rounded-full font-bold shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                                    <Flame size={14} />
+                                    <span className="text-[11px]">Popüler</span>
+                                </button>
+                                <button onClick={() => { setViewMode('leaderboard'); fetchLeaderboard(); }} className="flex items-center gap-1.5 bg-white/5 border border-white/10 text-yellow-400 px-4 py-2.5 rounded-full font-bold shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                                    <Trophy size={14} />
+                                    <span className="text-[11px]">Liderler</span>
+                                </button>
                             </div>
                         </>
                     )}
