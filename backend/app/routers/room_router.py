@@ -89,16 +89,20 @@ def create_room(
     current_user: User = Depends(get_current_user)
 ):
     """Yeni çalışma odası oluşturur. Kullanıcı aynı anda yalnızca 1 aktif oda açabilir."""
-    # Zaten aktif odası var mı?
-    existing = db.query(StudyRoom).filter(
+    # Zaten aktif odası var mı? Varsa otomatik kapat ve temizle!
+    existing_rooms = db.query(StudyRoom).filter(
         StudyRoom.host_id == current_user.id,
         StudyRoom.status != "closed"
-    ).first()
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Zaten aktif bir odanız var. Yeni oda açmadan önce mevcut odanızı kapatın."
-        )
+    ).all()
+    for er in existing_rooms:
+        er.status = "closed"
+        er.closed_at = datetime.now()
+        er.closed_by = current_user.id
+        db.query(RoomParticipant).filter(
+            RoomParticipant.room_id == er.id,
+            RoomParticipant.is_active == True
+        ).update({"is_active": False, "left_at": datetime.now()})
+    db.commit()
 
     room = StudyRoom(
         name=data.name,
@@ -160,26 +164,36 @@ def join_room(
         raise HTTPException(status_code=404, detail="Oda bulunamadı")
     if room.status == "closed":
         raise HTTPException(status_code=400, detail="Bu oda kapatılmış")
-    if room.active_participant_count >= room.max_participants:
+    
+    # Kurucu (host) odaya katılırken kapasite sınırına takılmamalıdır
+    if room.active_participant_count >= room.max_participants and room.host_id != current_user.id:
         raise HTTPException(status_code=400, detail="Oda dolu")
 
-    # Zaten katılmış mı?
-    existing = db.query(RoomParticipant).filter(
+    # Mükerrer kayıt önleme: Zaten katılım kaydı var mı (aktif veya pasif)?
+    participant = db.query(RoomParticipant).filter(
         RoomParticipant.room_id == room_id,
-        RoomParticipant.user_id == current_user.id,
-        RoomParticipant.is_active == True
+        RoomParticipant.user_id == current_user.id
     ).first()
-    if existing:
-        return room_to_response(room)  # Zaten içerde, sorun yok
 
-    # Katılımcı kaydı
-    participant = RoomParticipant(room_id=room_id, user_id=current_user.id)
-    db.add(participant)
+    if participant:
+        if not participant.is_active:
+            participant.is_active = True
+            participant.joined_at = datetime.now()
+            participant.left_at   = None
+            
+            # Sistem mesajı
+            name = current_user.display_name or current_user.email.split("@")[0]
+            msg  = RoomMessage(room_id=room_id, content=f"👋 {name} odaya katıldı.", is_system=True)
+            db.add(msg)
+    else:
+        # Yeni katılımcı kaydı
+        participant = RoomParticipant(room_id=room_id, user_id=current_user.id)
+        db.add(participant)
 
-    # Sistem mesajı
-    name = current_user.display_name or current_user.email.split("@")[0]
-    msg  = RoomMessage(room_id=room_id, content=f"👋 {name} odaya katıldı.", is_system=True)
-    db.add(msg)
+        # Sistem mesajı
+        name = current_user.display_name or current_user.email.split("@")[0]
+        msg  = RoomMessage(room_id=room_id, content=f"👋 {name} odaya katıldı.", is_system=True)
+        db.add(msg)
 
     db.commit()
     db.refresh(room)
@@ -194,6 +208,10 @@ def leave_room(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    room = db.query(StudyRoom).filter(StudyRoom.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+
     participant = db.query(RoomParticipant).filter(
         RoomParticipant.room_id == room_id,
         RoomParticipant.user_id == current_user.id,
@@ -207,15 +225,15 @@ def leave_room(
         name = current_user.display_name or current_user.email.split("@")[0]
         msg  = RoomMessage(room_id=room_id, content=f"👋 {name} odadan ayrıldı.", is_system=True)
         db.add(msg)
-        db.commit()
 
+    db.commit()
     return {"message": "Odadan ayrıldınız"}
 
 
 # ── 6. ODAYI KAPAT (Host veya Admin) ─────────────────────────
 
 @router.post("/{room_id}/close")
-def close_room(
+async def close_room(
     room_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -240,7 +258,15 @@ def close_room(
     msg = RoomMessage(room_id=room_id, content="🔒 Oda kapatıldı.", is_system=True)
     db.add(msg)
     db.commit()
+
+    # Real-time WebSocket Bildirimi: Odanın kapatıldığını tüm üyelere duyur
+    await manager.broadcast(room_id, {
+        "type": "room_closed",
+        "timestamp": datetime.now().isoformat()
+    })
+
     return {"message": "Oda kapatıldı"}
+
 
 
 # ── 7. MESAJ GEÇMİŞİ ─────────────────────────────────────────
@@ -523,7 +549,9 @@ async def request_join_room(
         raise HTTPException(status_code=404, detail="Oda bulunamadı")
     if room.status == "closed":
         raise HTTPException(status_code=400, detail="Bu oda kapatılmış")
-    if room.active_participant_count >= room.max_participants:
+    
+    # Kurucu (host) odaya katılırken/istek gönderirken kapasite sınırına takılmamalıdır
+    if room.active_participant_count >= room.max_participants and room.host_id != current_user.id:
         raise HTTPException(status_code=400, detail="Oda dolu")
 
     # Oda sahibi ise direkt onaylı sayılır
@@ -621,14 +649,24 @@ async def approve_join_request(
     # Katılımcıyı odaya ekle
     req.status = "approved"
     
-    # Zaten aktif mi kontrolü (güvenlik için)
-    existing = db.query(RoomParticipant).filter(
+    # Mükerrer kayıt önleme: Zaten katılım kaydı var mı (aktif veya pasif)?
+    participant = db.query(RoomParticipant).filter(
         RoomParticipant.room_id == req.room_id,
-        RoomParticipant.user_id == req.user_id,
-        RoomParticipant.is_active == True
+        RoomParticipant.user_id == req.user_id
     ).first()
     
-    if not existing:
+    if participant:
+        if not participant.is_active:
+            participant.is_active = True
+            participant.joined_at = datetime.now()
+            participant.left_at   = None
+            
+            # Sistem mesajı
+            name = req.user.display_name or req.user.email.split("@")[0] if req.user else "Bilinmeyen"
+            msg = RoomMessage(room_id=req.room_id, content=f"👋 {name} odaya katıldı.", is_system=True)
+            db.add(msg)
+    else:
+        # Yeni katılımcı kaydı
         participant = RoomParticipant(room_id=req.room_id, user_id=req.user_id)
         db.add(participant)
 
@@ -769,6 +807,18 @@ async def room_websocket(websocket: WebSocket, room_id: int):
     # ── 3. Bağlan ─────────────────────────────────────────────
     await manager.connect(room_id, websocket, user.id, display_name, avatar_url)
 
+    # Katılımcıyı veritabanında aktif yap (senkronizasyon için)
+    try:
+        participant = db.query(RoomParticipant).filter(
+            RoomParticipant.room_id == room_id,
+            RoomParticipant.user_id == user.id
+        ).first()
+        if participant:
+            participant.is_active = True
+            db.commit()
+    except Exception as db_err:
+        print(f"WS connect DB update error: {db_err}")
+
     # Bağlanan kullanıcıya güncel süreyi hemen gönder (senkronizasyon için)
     timer_state = manager.get_timer_state(room_id)
     await websocket.send_json({
@@ -868,6 +918,20 @@ async def room_websocket(websocket: WebSocket, room_id: int):
     finally:
         # ── 5. Bağlantı koptu ────────────────────────────────
         manager.disconnect(room_id, websocket)
+
+        # Katılımcıyı veritabanında pasif yap (Çok önemli!)
+        try:
+            participant = db.query(RoomParticipant).filter(
+                RoomParticipant.room_id == room_id,
+                RoomParticipant.user_id == user.id,
+                RoomParticipant.is_active == True
+            ).first()
+            if participant:
+                participant.is_active = False
+                participant.left_at   = datetime.now()
+                db.commit()
+        except Exception as db_err:
+            print(f"WS disconnect DB update error: {db_err}")
 
         await manager.broadcast(room_id, {
             "type": "system",

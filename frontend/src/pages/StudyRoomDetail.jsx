@@ -189,6 +189,11 @@ export default function StudyRoomDetail() {
         setTimeout(() => {
           navigate('/study-rooms');
         }, 1500);
+      } else if (data.type === 'room_closed') {
+        toast.error('Oda kapatıldı veya silindi.', { duration: 3000 });
+        setTimeout(() => {
+          navigate('/study-rooms');
+        }, 1500);
       }
     };
 
@@ -375,6 +380,26 @@ export default function StudyRoomDetail() {
       });
     } catch {}
     navigate('/study-rooms');
+  };
+
+  // ── Odayı kapat/sil (Sadece kurucu için) ────────────────────
+  const handleDeleteRoom = async () => {
+    if (!window.confirm('Bu odayı kapatmak ve tüm katılımcıları çıkarmak istediğinize emin misiniz?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/rooms/${id}/close`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success('Oda başarıyla kapatıldı.');
+        navigate('/study-rooms');
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'Oda kapatılamadı.');
+      }
+    } catch {
+      toast.error('Bağlantı hatası');
+    }
   };
 
   if (loading) {
@@ -647,7 +672,13 @@ export default function StudyRoomDetail() {
             </Link>
           </div>
 
-          <div className="p-4 border-t border-white/5 shrink-0">
+          <div className="p-4 border-t border-white/5 shrink-0 space-y-2">
+            {isHost && (
+              <button onClick={handleDeleteRoom}
+                className="w-full flex items-center justify-center gap-2 text-xs font-black text-red-200 border border-red-500/30 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30 py-3 rounded-xl transition-all uppercase tracking-wider shadow-[0_0_15px_rgba(239,68,68,0.1)] hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                <Trash2 size={14} className="text-red-400" /> Odayı Sil / Kapat
+              </button>
+            )}
             <button onClick={handleLeave}
               className="w-full flex items-center justify-center gap-2 text-xs font-black text-slate-400 hover:text-red-400 border border-white/10 hover:border-red-500/30 bg-white/5 hover:bg-red-500/10 py-3 rounded-xl transition-all uppercase tracking-wider">
               <LogOut size={14} /> Odadan Ayrıl

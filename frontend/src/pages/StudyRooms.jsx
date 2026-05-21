@@ -366,8 +366,9 @@ export default function StudyRooms() {
               </div>
             )}
             {filtered.map(room => {
-              const isFull = room.participant_count >= room.max_participants;
-              const statusKey = isFull ? 'full' : (room.status || 'active');
+              const isHost = room.host_id === currentUser?.id;
+              const isFull = room.participant_count >= room.max_participants && !isHost;
+              const statusKey = room.participant_count >= room.max_participants ? 'full' : (room.status || 'active');
               const st = STATUS_CFG[statusKey] || STATUS_CFG.active;
               return (
                 <div key={room.id}
