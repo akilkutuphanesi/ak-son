@@ -1,59 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   GraduationCap, Plus, Edit, Trash2, X, Users, MessageSquare,
   CheckCircle2, TrendingUp, BookOpen, ChevronDown, ChevronRight
 } from 'lucide-react';
 
-const DUMMY_DEPARTMENTS = [
-  {
-    id: 1, name: 'Bilgisayar Mühendisliği', code: 'CS', color: '#3b82f6',
-    faculty: 'Mühendislik Fakültesi', studentCount: 420, questionCount: 312,
-    active: true,
-    categories: ['Yazılım', 'Algoritma', 'Veritabanı', 'Ağ & Güvenlik'],
-  },
-  {
-    id: 2, name: 'Yazılım Mühendisliği', code: 'SE', color: '#8b5cf6',
-    faculty: 'Mühendislik Fakültesi', studentCount: 310, questionCount: 198,
-    active: true,
-    categories: ['Frontend', 'Backend', 'Mobil', 'DevOps'],
-  },
-  {
-    id: 3, name: 'Elektrik-Elektronik Mühendisliği', code: 'EE', color: '#f59e0b',
-    faculty: 'Mühendislik Fakültesi', studentCount: 280, questionCount: 115,
-    active: true,
-    categories: ['Devre Analizi', 'Sinyal İşleme', 'Güç Elektroniği'],
-  },
-  {
-    id: 4, name: 'Makine Mühendisliği', code: 'ME', color: '#10b981',
-    faculty: 'Mühendislik Fakültesi', studentCount: 255, questionCount: 89,
-    active: true,
-    categories: ['Termodinamik', 'Mekanik', 'CAD/CAM'],
-  },
-  {
-    id: 5, name: 'Endüstri Mühendisliği', code: 'IE', color: '#f97316',
-    faculty: 'Mühendislik Fakültesi', studentCount: 190, questionCount: 67,
-    active: true,
-    categories: ['Operasyon Araştırması', 'Kalite Yönetimi', 'İstatistik'],
-  },
-  {
-    id: 6, name: 'İnşaat Mühendisliği', code: 'CE', color: '#64748b',
-    faculty: 'Mühendislik Fakültesi', studentCount: 175, questionCount: 42,
-    active: false,
-    categories: ['Yapı Statiği', 'Zemin Mekaniği'],
-  },
-  {
-    id: 7, name: 'Havacılık ve Uzay Mühendisliği', code: 'AE', color: '#06b6d4',
-    faculty: 'Mühendislik Fakültesi', studentCount: 140, questionCount: 56,
-    active: true,
-    categories: ['Aerodinamik', 'Uçuş Mekaniği', 'Uzay Sistemleri'],
-  },
-  {
-    id: 8, name: 'Ekonomi', code: 'ECON', color: '#84cc16',
-    faculty: 'İşletme ve Yönetim Bilimleri Fakültesi', studentCount: 220, questionCount: 78,
-    active: true,
-    categories: ['Mikro Ekonomi', 'Makro Ekonomi', 'Ekonometri'],
-  },
-];
 
 const FACULTIES = ['Mühendislik Fakültesi', 'İşletme ve Yönetim Bilimleri Fakültesi', 'Fen-Edebiyat Fakültesi', 'Tıp Fakültesi'];
 
@@ -62,13 +12,33 @@ const EMPTY_FORM = {
 };
 
 export default function DepartmentsTab() {
-  const [departments, setDepartments] = useState(DUMMY_DEPARTMENTS);
+  const [departments, setDepartments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [expandedId, setExpandedId] = useState(null);
   const [newCat, setNewCat] = useState('');
   const [filterFaculty, setFilterFaculty] = useState('Tümü');
+
+  useEffect(() => {
+    const fetchDepts = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_BASE}/admin/departments`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.ok) {
+            const data = await res.json();
+            const mapped = data.map(d => ({
+                id: d.id, name: d.name, code: d.name.substring(0,3).toUpperCase(), color: '#3b82f6',
+                faculty: 'Genel', studentCount: d.students || 0, questionCount: 0,
+                active: d.status === 'Aktif', categories: []
+            }));
+            setDepartments(mapped);
+        }
+      } catch(err) { console.error(err); }
+    };
+    fetchDepts();
+  }, []);
 
   const totalStudents = departments.reduce((s, d) => s + d.studentCount, 0);
   const totalQuestions = departments.reduce((s, d) => s + d.questionCount, 0);
@@ -91,21 +61,37 @@ export default function DepartmentsTab() {
     setNewCat('');
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      setDepartments(prev => prev.map(d => d.id === editingId ? { ...d, ...form } : d));
-    } else {
-      setDepartments(prev => [...prev, {
-        ...form, id: Date.now(), studentCount: 0, questionCount: 0,
-      }]);
-    }
+    try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        if(editingId) {
+            setDepartments(prev => prev.map(d => d.id === editingId ? { ...d, ...form } : d));
+        } else {
+            const res = await fetch(`${API_BASE}/admin/departments`, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: form.name })
+            });
+            if(res.ok) {
+                const data = await res.json();
+                setDepartments(prev => [...prev, {
+                    ...form, id: data.id, studentCount: 0, questionCount: 0, active: true
+                }]);
+            }
+        }
+    } catch(err) {}
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bu bölümü silmek istediğinize emin misiniz?')) {
-      setDepartments(prev => prev.filter(d => d.id !== id));
+        try {
+            const token = localStorage.getItem("token");
+            const API_BASE = import.meta.env.VITE_API_URL;
+            const res = await fetch(`${API_BASE}/admin/departments/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if(res.ok) setDepartments(prev => prev.filter(d => d.id !== id));
+        } catch(err){}
     }
   };
 
@@ -129,8 +115,8 @@ export default function DepartmentsTab() {
       {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#121826] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-indigo-900/30 to-slate-900/30 p-6 border-b border-white/5 flex justify-between items-center sticky top-0 z-10 backdrop-blur-xl">
+          <div className="bg-[#161b2c] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-indigo-900/30 to-slate-900/30 p-6 border-b border-white/10 flex justify-between items-center sticky top-0 z-10 backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 bg-indigo-500/20 rounded-xl flex items-center justify-center">
                   <GraduationCap size={18} className="text-indigo-400" />
@@ -147,7 +133,7 @@ export default function DepartmentsTab() {
             <form onSubmit={handleSave} className="p-6 space-y-5">
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Bölüm Adı *</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Bölüm Adı *</label>
                   <input required type="text" value={form.name}
                     onChange={e => setForm({ ...form, name: e.target.value })}
                     placeholder="Bilgisayar Mühendisliği"
@@ -155,7 +141,7 @@ export default function DepartmentsTab() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Kısa Kod *</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Kısa Kod *</label>
                   <input required type="text" value={form.code}
                     onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })}
                     maxLength={6} placeholder="CS"
@@ -165,7 +151,7 @@ export default function DepartmentsTab() {
               </div>
 
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Fakülte</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Fakülte</label>
                 <select value={form.faculty} onChange={e => setForm({ ...form, faculty: e.target.value })}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all">
                   {FACULTIES.map(f => <option key={f} value={f} className="bg-[#1a2035]">{f}</option>)}
@@ -174,7 +160,7 @@ export default function DepartmentsTab() {
 
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Renk</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Renk</label>
                   <div className="flex items-center gap-3">
                     <input type="color" value={form.color} onChange={e => setForm({ ...form, color: e.target.value })}
                       className="w-12 h-10 rounded-xl border border-white/10 bg-transparent cursor-pointer" />
@@ -184,7 +170,7 @@ export default function DepartmentsTab() {
                 <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 flex-1">
                   <div>
                     <p className="text-white text-sm font-bold">Aktif</p>
-                    <p className="text-slate-500 text-xs">Sistemde görünür</p>
+                    <p className="text-slate-400 text-xs">Sistemde görünür</p>
                   </div>
                   <button type="button" onClick={() => setForm(f => ({ ...f, active: !f.active }))}
                     className={`ml-auto w-11 h-6 rounded-full transition-all relative ${form.active ? 'bg-emerald-500' : 'bg-white/10'}`}>
@@ -195,7 +181,7 @@ export default function DepartmentsTab() {
 
               {/* KATEGORİLER */}
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Kategoriler / Konular</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Kategoriler / Konular</label>
                 <div className="flex gap-2 mb-3">
                   <input type="text" value={newCat} onChange={e => setNewCat(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCat())}
@@ -211,7 +197,7 @@ export default function DepartmentsTab() {
                   {form.categories.map(cat => (
                     <span key={cat} className="flex items-center gap-1.5 bg-white/5 border border-white/10 text-slate-300 text-xs font-bold px-3 py-1.5 rounded-lg">
                       {cat}
-                      <button type="button" onClick={() => removeCat(cat)} className="text-slate-500 hover:text-red-400 transition-colors">
+                      <button type="button" onClick={() => removeCat(cat)} className="text-slate-400 hover:text-red-400 transition-colors">
                         <X size={12} />
                       </button>
                     </span>
@@ -236,7 +222,7 @@ export default function DepartmentsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-black text-white">Bölüm & Kategori Yönetimi</h2>
-          <p className="text-slate-500 text-sm mt-1">Sistemdeki fakülte bölümleri ve konu kategorilerini yönet</p>
+          <p className="text-slate-400 text-sm mt-1">Sistemdeki fakülte bölümleri ve konu kategorilerini yönet</p>
         </div>
         <button onClick={openCreate}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95">
@@ -276,7 +262,7 @@ export default function DepartmentsTab() {
           const pct = Math.round((dept.studentCount / totalStudents) * 100);
           return (
             <div key={dept.id}
-              className={`bg-[#161b2c] border rounded-2xl overflow-hidden transition-all ${dept.active ? 'border-white/10 hover:border-white/20' : 'border-white/5 opacity-60'}`}>
+              className={`bg-[#161b2c] border rounded-2xl overflow-hidden transition-all ${dept.active ? 'border-white/10 hover:border-white/20' : 'border-white/10 opacity-60'}`}>
               <div className="flex items-center gap-4 p-5">
                 {/* Renk badge */}
                 <div className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 font-black text-sm text-white shadow-lg"
@@ -292,14 +278,14 @@ export default function DepartmentsTab() {
                       <span className="text-[10px] bg-slate-500/10 text-slate-400 border border-slate-500/20 px-2 py-0.5 rounded-lg font-bold uppercase">Pasif</span>
                     )}
                   </div>
-                  <p className="text-slate-500 text-xs">{dept.faculty}</p>
+                  <p className="text-slate-400 text-xs">{dept.faculty}</p>
 
                   {/* Progress bar */}
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex-1 bg-white/5 rounded-full h-1.5">
                       <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: dept.color }} />
                     </div>
-                    <span className="text-[10px] text-slate-500 font-bold shrink-0">%{pct}</span>
+                    <span className="text-[10px] text-slate-400 font-bold shrink-0">%{pct}</span>
                   </div>
                 </div>
 
@@ -310,14 +296,14 @@ export default function DepartmentsTab() {
                       <Users size={12} />
                       <span className="font-black text-sm text-white">{dept.studentCount.toLocaleString()}</span>
                     </div>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Öğrenci</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider">Öğrenci</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center gap-1 text-purple-400">
                       <MessageSquare size={12} />
                       <span className="font-black text-sm text-white">{dept.questionCount}</span>
                     </div>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Soru</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider">Soru</p>
                   </div>
                 </div>
 
@@ -345,8 +331,8 @@ export default function DepartmentsTab() {
 
               {/* KATEGORİ PANEL */}
               {isExpanded && (
-                <div className="px-5 pb-5 border-t border-white/5 pt-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <div className="px-5 pb-5 border-t border-white/10 pt-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <BookOpen size={11} /> Konu Kategorileri ({dept.categories.length})
                   </p>
                   <div className="flex flex-wrap gap-2">

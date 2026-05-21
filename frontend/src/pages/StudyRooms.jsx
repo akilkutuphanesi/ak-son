@@ -167,8 +167,8 @@ export default function StudyRooms() {
       {/* ODA OLUŞTUR MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#121826] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="bg-gradient-to-r from-purple-900/40 to-slate-900/30 p-6 border-b border-white/5 flex justify-between items-center">
+          <div className="bg-[#161b2c] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-gradient-to-r from-purple-900/40 to-slate-900/30 p-6 border-b border-white/10 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 bg-purple-500/20 rounded-xl flex items-center justify-center">
                   <BookOpen size={18} className="text-purple-400" />
@@ -181,27 +181,27 @@ export default function StudyRooms() {
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Oda Adı *</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Oda Adı *</label>
                 <input required type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                   placeholder="Ör: Vize Öncesi Algoritma Maratonu"
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all" />
               </div>
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Konu / Ders *</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Konu / Ders *</label>
                 <input required type="text" value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })}
                   placeholder="Ör: Algoritma ve Veri Yapıları"
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Bölüm</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Bölüm</label>
                   <select value={form.dept} onChange={e => setForm({ ...form, dept: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all">
                     {DEPARTMENTS.filter(d => d !== 'Tümü').map(d => <option key={d} value={d} className="bg-[#1a2035]">{d}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Maks. Kişi</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Maks. Kişi</label>
                   <select value={form.max} onChange={e => setForm({ ...form, max: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all">
                     {[4,6,8,10,12,16].map(n => <option key={n} value={n} className="bg-[#1a2035]">{n} kişi</option>)}
@@ -209,12 +209,12 @@ export default function StudyRooms() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Açıklama</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Açıklama</label>
                 <textarea value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })}
                   rows={2} placeholder="Odanın amacını kısaca anlat..."
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all resize-none" />
               </div>
-              <div className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl">
                 <div className="flex items-center gap-2">
                   {form.isPublic ? <Globe size={14} className="text-blue-400" /> : <Lock size={14} className="text-slate-400" />}
                   <span className="text-white text-sm font-bold">{form.isPublic ? 'Herkese Açık' : 'Gizli Oda'}</span>
@@ -256,7 +256,7 @@ export default function StudyRooms() {
         {/* ARAMA + FİLTRE */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Oda adı veya konu ara..."
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all" />
@@ -282,7 +282,7 @@ export default function StudyRooms() {
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.length === 0 && (
-              <div className="col-span-3 text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10 text-slate-500">
+              <div className="col-span-3 text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10 text-slate-400">
                 <BookOpen size={40} className="mx-auto mb-3 opacity-40" />
                 <p className="font-bold">Henüz oda yok.</p>
                 <p className="text-xs mt-1">İlk odayı oluşturmak için "Oda Oluştur" butonuna tıkla!</p>
@@ -304,7 +304,7 @@ export default function StudyRooms() {
                       </div>
                       <div>
                         <h3 className="text-white font-bold text-sm leading-tight group-hover:text-purple-300 transition-colors">{room.name}</h3>
-                        <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
+                        <p className="text-slate-400 text-xs mt-0.5 flex items-center gap-1">
                           <GraduationCap size={10} /> {room.department || 'Genel'}
                         </p>
                       </div>
@@ -321,21 +321,21 @@ export default function StudyRooms() {
                         <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                         {st.label}
                       </span>
-                      <span className="text-[10px] text-slate-500 bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg font-bold">
+                      <span className="text-[10px] text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg font-bold">
                         Konu: {room.topic}
                       </span>
-                      {!room.is_public && <Lock size={12} className="text-slate-500 ml-auto" />}
+                      {!room.is_public && <Lock size={12} className="text-slate-400 ml-auto" />}
                     </div>
 
                     {/* Host bilgisi */}
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
                       <Star size={10} className="text-amber-400" />
                       <span>Kurucu: <span className="text-white font-bold">{room.host_name || 'Anonim'}</span></span>
                     </div>
 
                     {/* Alt bilgi + Buton */}
-                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
                         <div className="flex -space-x-1.5">
                           {Array.from({ length: Math.min(room.participant_count || 0, 4) }).map((_, i) => (
                             <div key={i} className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 border border-[#161b2c] flex items-center justify-center text-[9px] font-black text-white">
@@ -350,7 +350,7 @@ export default function StudyRooms() {
                         disabled={isFull}
                         className={`flex items-center gap-1.5 text-xs font-black px-4 py-2 rounded-xl border transition-all ${
                           isFull
-                            ? 'bg-white/5 text-slate-500 border-white/5 cursor-not-allowed'
+                            ? 'bg-white/5 text-slate-400 border-white/10 cursor-not-allowed'
                             : 'bg-purple-600 hover:bg-purple-700 text-white border-purple-500 shadow-lg hover:scale-105 active:scale-95'
                         }`}>
                         {isFull ? 'Dolu' : <><span>Katıl</span><ChevronRight size={14} /></>}

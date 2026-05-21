@@ -38,13 +38,13 @@ export default function ReportsTab() {
         </div>
 
         {/* Gelecek Grafikler İçin Yer Tutucu */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm flex flex-col items-center justify-center text-center text-slate-500 min-h-[300px]">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm flex flex-col items-center justify-center text-center text-slate-400 min-h-[300px]">
             <BarChart size={64} className="mb-4 opacity-50 text-red-400"/>
             <h3 className="text-xl font-bold text-slate-300 mb-2">Gelişmiş Grafik Modülü</h3>
             <p className="text-sm max-w-xs leading-relaxed">
               Bu alan, Spring Boot backend'i bağlandığında haftalık aktiflik ve çözülen soru eğrilerini gösterecek şekilde aktif olacaktır.
             </p>
-            <div className="mt-6 px-4 py-2 bg-white/5 rounded-lg text-xs font-bold text-slate-400 uppercase tracking-widest border border-white/5 flex items-center gap-2">
+            <div className="mt-6 px-4 py-2 bg-white/5 rounded-lg text-xs font-bold text-slate-400 uppercase tracking-widest border border-white/10 flex items-center gap-2">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>

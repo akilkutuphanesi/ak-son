@@ -1,56 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Megaphone, Plus, Trash2, Edit, X, Pin, PinOff, CheckCircle2, Clock, AlertCircle, Globe } from 'lucide-react';
 
-const DUMMY_ANNOUNCEMENTS = [
-  {
-    id: 1,
-    title: '🎓 Dönem Sonu Sınav Takvimi Açıklandı',
-    content: 'Bahar dönemi final sınavları 15 Haziran - 1 Temmuz tarihleri arasında gerçekleştirilecektir. Sınav programları öğrenci bilgi sisteminde yayımlanmıştır. Tüm öğrencilerin takvimi kontrol etmesi önerilir.',
-    target: 'Tüm Öğrenciler',
-    status: 'Yayında',
-    pinned: true,
-    priority: 'yüksek',
-    author: 'Admin',
-    date: '2026-05-06',
-    views: 1248,
-  },
-  {
-    id: 2,
-    title: '📚 Kütüphane Sistemi Güncelleme Bildirimi',
-    content: 'Akıl Kütüphanesi sistemi 8 Mayıs 2026 tarihinde bakım moduna alınacaktır. Bu süreçte sisteme erişim yaklaşık 2 saat boyunca kısıtlanacaktır. Anlayışınız için teşekkür ederiz.',
-    target: 'Tüm Kullanıcılar',
-    status: 'Yayında',
-    pinned: false,
-    priority: 'orta',
-    author: 'Admin',
-    date: '2026-05-05',
-    views: 456,
-  },
-  {
-    id: 3,
-    title: '🚀 Yeni Özellikler: Fotoğraf & Bildirim Desteği',
-    content: 'Akıl Kütüphanesi\'ne yeni özellikler eklendi! Artık sorularınıza fotoğraf ekleyebilir ve cevap aldığınızda anlık bildirim alabilirsiniz. Ayrıca profil ayarlarından görünen adınızı özelleştirebilirsiniz.',
-    target: 'Tüm Kullanıcılar',
-    status: 'Taslak',
-    pinned: false,
-    priority: 'düşük',
-    author: 'Admin',
-    date: '2026-05-03',
-    views: 0,
-  },
-  {
-    id: 4,
-    title: '⚠️ Akademik Dürüstlük Hatırlatması',
-    content: 'Platformumuzda paylaşılan içeriklerin akademik dürüstlük ilkelerine uygun olması zorunludur. Sınav sorusu paylaşımı, kopya teşvik edici içerikler ve telif hakkı ihlalleri tespit edildiğinde ilgili hesaplar askıya alınacaktır.',
-    target: 'Bilgisayar Müh.',
-    status: 'Yayında',
-    pinned: false,
-    priority: 'yüksek',
-    author: 'Admin',
-    date: '2026-04-28',
-    views: 320,
-  },
-];
 
 const PRIORITY_CONFIG = {
   'yüksek': { label: 'Yüksek', class: 'bg-red-500/10 text-red-400 border-red-500/20' },
@@ -68,11 +18,23 @@ const EMPTY_FORM = {
 };
 
 export default function AnnouncementsTab() {
-  const [announcements, setAnnouncements] = useState(DUMMY_ANNOUNCEMENTS);
+  const [announcements, setAnnouncements] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [filter, setFilter] = useState('Tümü');
+
+  useEffect(() => {
+    const fetchAnn = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_BASE}/admin/announcements`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.ok) setAnnouncements(await res.json());
+      } catch(err) { console.error(err); }
+    };
+    fetchAnn();
+  }, []);
 
   const targets = ['Tüm Kullanıcılar', 'Tüm Öğrenciler', 'Bilgisayar Müh.', 'Yazılım Müh.', 'Makine Müh.', 'Elektrik-Elektronik Müh.'];
 
@@ -92,22 +54,36 @@ export default function AnnouncementsTab() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      setAnnouncements(prev => prev.map(a => a.id === editingId ? { ...a, ...form } : a));
-    } else {
-      setAnnouncements(prev => [{
-        ...form, id: Date.now(), author: 'Admin',
-        date: new Date().toISOString().split('T')[0], views: 0,
-      }, ...prev]);
-    }
+    try {
+        const token = localStorage.getItem("token");
+        const API_BASE = import.meta.env.VITE_API_URL;
+        if(editingId) {
+            setAnnouncements(prev => prev.map(a => a.id === editingId ? { ...a, ...form } : a));
+        } else {
+            const res = await fetch(`${API_BASE}/admin/announcements`, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            });
+            if(res.ok) {
+                setAnnouncements(prev => [{
+                    ...form, id: Date.now(), author: 'Admin', date: new Date().toISOString().split('T')[0], views: 0
+                }, ...prev]);
+            }
+        }
+    } catch(err) {}
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bu duyuruyu silmek istediğinize emin misiniz?')) {
-      setAnnouncements(prev => prev.filter(a => a.id !== id));
+        try {
+            const token = localStorage.getItem("token");
+            const API_BASE = import.meta.env.VITE_API_URL;
+            const res = await fetch(`${API_BASE}/admin/announcements/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if(res.ok) setAnnouncements(prev => prev.filter(a => a.id !== id));
+        } catch(err) {}
     }
   };
 
@@ -133,8 +109,8 @@ export default function AnnouncementsTab() {
       {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#121826] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="bg-gradient-to-r from-red-900/30 to-slate-900/30 p-6 border-b border-white/5 flex justify-between items-center">
+          <div className="bg-[#161b2c] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-gradient-to-r from-red-900/30 to-slate-900/30 p-6 border-b border-white/10 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 bg-red-500/20 rounded-xl flex items-center justify-center">
                   <Megaphone size={18} className="text-red-400" />
@@ -150,7 +126,7 @@ export default function AnnouncementsTab() {
 
             <form onSubmit={handleSave} className="p-6 space-y-4">
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Başlık *</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Başlık *</label>
                 <input
                   required type="text"
                   value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
@@ -160,7 +136,7 @@ export default function AnnouncementsTab() {
               </div>
 
               <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">İçerik *</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">İçerik *</label>
                 <textarea
                   required rows={4}
                   value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}
@@ -171,7 +147,7 @@ export default function AnnouncementsTab() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Hedef Kitle</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Hedef Kitle</label>
                   <select
                     value={form.target} onChange={e => setForm({ ...form, target: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-red-500/50 transition-all"
@@ -180,7 +156,7 @@ export default function AnnouncementsTab() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block mb-2">Öncelik</label>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Öncelik</label>
                   <select
                     value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-red-500/50 transition-all"
@@ -192,10 +168,10 @@ export default function AnnouncementsTab() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
                 <div>
                   <p className="text-white text-sm font-bold">Sayfanın Başına Sabitle</p>
-                  <p className="text-slate-500 text-xs mt-0.5">Tüm kullanıcılara önce göster</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Tüm kullanıcılara önce göster</p>
                 </div>
                 <button type="button" onClick={() => setForm({ ...form, pinned: !form.pinned })}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${form.pinned ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-white/5 text-slate-400 border-white/10'}`}>
@@ -224,7 +200,7 @@ export default function AnnouncementsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-black text-white">Duyuru Yönetimi</h2>
-          <p className="text-slate-500 text-sm mt-1">Öğrencilere ve kullanıcılara duyuru yayınla</p>
+          <p className="text-slate-400 text-sm mt-1">Öğrencilere ve kullanıcılara duyuru yayınla</p>
         </div>
         <button onClick={openCreate}
           className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-3 rounded-xl transition-all shadow-lg hover:shadow-red-900/40 hover:scale-105 active:scale-95">
@@ -255,13 +231,13 @@ export default function AnnouncementsTab() {
             {f}
           </button>
         ))}
-        <span className="ml-auto text-slate-500 text-xs">{filtered.length} duyuru</span>
+        <span className="ml-auto text-slate-400 text-xs">{filtered.length} duyuru</span>
       </div>
 
       {/* DUYURU LİSTESİ */}
       <div className="space-y-4">
         {filtered.length === 0 && (
-          <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10 text-slate-500">
+          <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10 text-slate-400">
             <Megaphone size={40} className="mx-auto mb-3 opacity-40" />
             <p className="font-bold">Bu kategoride duyuru yok.</p>
           </div>
@@ -287,7 +263,7 @@ export default function AnnouncementsTab() {
                   <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${PRIORITY_CONFIG[ann.priority]?.class}`}>
                     {PRIORITY_CONFIG[ann.priority]?.label}
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-slate-500 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">
+                  <span className="flex items-center gap-1 text-[10px] text-slate-400 bg-white/5 border border-white/10 px-2 py-1 rounded-lg">
                     <Globe size={10} /> {ann.target}
                   </span>
                 </div>
@@ -304,7 +280,7 @@ export default function AnnouncementsTab() {
 
               <div className="flex sm:flex-col gap-2 shrink-0">
                 <button onClick={() => togglePin(ann.id)} title={ann.pinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}
-                  className={`p-2.5 rounded-xl border transition-all ${ann.pinned ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' : 'bg-white/5 text-slate-500 border-white/10 hover:text-amber-400 hover:bg-amber-500/10'}`}>
+                  className={`p-2.5 rounded-xl border transition-all ${ann.pinned ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' : 'bg-white/5 text-slate-400 border-white/10 hover:text-amber-400 hover:bg-amber-500/10'}`}>
                   {ann.pinned ? <Pin size={15} /> : <PinOff size={15} />}
                 </button>
                 <button onClick={() => toggleStatus(ann.id)} title="Durumu Değiştir"

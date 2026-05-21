@@ -107,7 +107,7 @@ export default function QuestionDetailModal({
                                 >
                                     {selectedQuestion.owner?.email === userProfile?.email ? displayName : (selectedQuestion.owner ? (selectedQuestion.owner.display_name || selectedQuestion.owner.email.split('@')[0]) : "Anonim")}
                                 </h1>
-                                <span className="text-[10px] text-slate-500">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span>
+                                <span className="text-[10px] text-slate-400">{new Date(selectedQuestion.created_at).toLocaleString("tr-TR")}</span>
                             </div>
                         </div>
                         {editingQuestion === selectedQuestion.id ? (
@@ -118,7 +118,7 @@ export default function QuestionDetailModal({
                         ) : (
                             <>
                                 <h2 className="text-2xl font-black text-white leading-tight">{selectedQuestion.title}</h2>
-                                <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/5">{selectedQuestion.content}</div>
+                                <div className="text-slate-300 leading-relaxed text-sm whitespace-pre-wrap bg-[#161b2c] p-6 rounded-2xl border border-white/10">{selectedQuestion.content}</div>
                             </>
                         )}
                         {selectedQuestion.image_url && (
@@ -130,7 +130,7 @@ export default function QuestionDetailModal({
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
+                    <div className="flex items-center gap-4"><div className="h-px flex-1 bg-white/10"></div><span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{questionAnswers[selectedQuestion.id]?.length || 0} Cevap</span><div className="h-px flex-1 bg-white/10"></div></div>
                     <div className="space-y-4">
                         {sortedAnswers.length > 0 ? (
                             sortedAnswers.map(ans => (
@@ -147,7 +147,7 @@ export default function QuestionDetailModal({
                                         <div className="w-px flex-1 bg-white/5"></div>
                                     </div>
                                     <div className="flex-1 pb-4">
-                                        <div className={`bg-[#161b2c] border p-4 rounded-xl rounded-tl-none shadow-lg relative transition-all ${ans.is_best_answer ? 'border-green-500/50 bg-green-500/5' : 'border-white/5 hover:border-white/10'}`}>
+                                        <div className={`bg-[#161b2c] border p-4 rounded-xl rounded-tl-none shadow-lg relative transition-all ${ans.is_best_answer ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 hover:border-white/10'}`}>
                                             {ans.is_best_answer && (
                                                 <div className="absolute -top-3 left-4 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1 shadow-lg border-2 border-[#161b2c]">
                                                     <Star size={10} className="fill-white" /> Çözüldü

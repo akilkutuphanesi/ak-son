@@ -10,6 +10,7 @@ class Answer(Base):
     content = Column(String(5000)) # Uzun cevaplar için
     created_at = Column(DateTime, default=datetime.now)
     is_best_answer = Column(Boolean, default=False)
+    is_hidden = Column(Boolean, default=False)
     
     question_id = Column(Integer, ForeignKey("questions.id"))
     owner_id = Column(Integer, ForeignKey("users.id"))

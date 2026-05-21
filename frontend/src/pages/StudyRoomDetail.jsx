@@ -235,7 +235,7 @@ export default function StudyRoomDetail() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             {participants.length} Katılımcı
           </div>
-          <span className="text-slate-500 hidden md:block">Kurucu: <span className="text-white font-bold">{room.host_name}</span></span>
+          <span className="text-slate-400 hidden md:block">Kurucu: <span className="text-white font-bold">{room.host_name}</span></span>
         </div>
       </header>
 
@@ -290,10 +290,10 @@ export default function StudyRoomDetail() {
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`w-3 h-3 rounded-full transition-all ${i < (session - 1) % 4 ? 'bg-purple-500' : 'bg-white/10'}`} />
               ))}
-              <span className="text-slate-500 text-xs ml-2 font-bold">Seans {session}</span>
+              <span className="text-slate-400 text-xs ml-2 font-bold">Seans {session}</span>
             </div>
 
-            <div className="w-full bg-white/5 border border-white/5 rounded-xl p-4 text-center">
+            <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <p className="text-slate-400 text-xs leading-relaxed">
                 {isBreak ? '☕ Ekrandan uzaklaşın. Biraz esneyin ve su için.' : '🎯 Odaklanma zamanı. Bildirimleri kapatın.'}
               </p>
@@ -301,7 +301,7 @@ export default function StudyRoomDetail() {
           </div>
 
           {/* Katılımcılar */}
-          <div className="border-t border-white/5 p-5">
+          <div className="border-t border-white/10 p-5">
             <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-3 flex items-center gap-2">
               <Users size={11} /> Katılımcılar ({participants.length})
             </p>
@@ -321,7 +321,7 @@ export default function StudyRoomDetail() {
 
         {/* ORTA: Sohbet */}
         <div className="flex-1 w-full flex flex-col lg:border-r border-white/10 min-w-0 min-h-[500px] lg:min-h-0">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+          <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
             <h2 className="text-white font-bold text-sm flex items-center gap-2">
               <MessageSquare size={16} className="text-purple-400" /> Oda Sohbeti
             </h2>
@@ -345,7 +345,7 @@ export default function StudyRoomDetail() {
                         <span className="text-xs font-bold text-white">{m.sender_name}</span>
                         <span className="text-[10px] text-slate-600 font-mono">{fmtTimestamp(m.sent_at)}</span>
                       </div>
-                      <div className="bg-white/5 border border-white/5 rounded-xl rounded-tl-none p-3">
+                      <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-none p-3">
                         <p className="text-slate-300 text-sm leading-relaxed">{m.content}</p>
                       </div>
                     </div>
@@ -356,7 +356,7 @@ export default function StudyRoomDetail() {
             <div ref={chatEndRef} />
           </div>
 
-          <div className="p-4 border-t border-white/5 shrink-0 bg-[#0c1120]/60 lg:bg-transparent backdrop-blur-md sticky bottom-0 z-20">
+          <div className="p-4 border-t border-white/10 shrink-0 bg-[#0c1120]/60 lg:bg-transparent backdrop-blur-md sticky bottom-0 z-20">
             <div className="flex gap-2">
               <input type="text" value={msgText} onChange={e => setMsgText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendMessage()}
@@ -372,30 +372,30 @@ export default function StudyRoomDetail() {
 
         {/* SAĞ: Bilgi + Çıkış */}
         <aside className="w-full lg:w-80 bg-[#0c1120]/60 backdrop-blur-sm flex flex-col shrink-0 lg:overflow-hidden border-t lg:border-t-0 border-white/10">
-          <div className="p-4 border-b border-white/5 shrink-0">
+          <div className="p-4 border-b border-white/10 shrink-0">
             <h2 className="text-white font-bold text-sm flex items-center gap-2">
               <BookOpen size={16} className="text-amber-400" />
               <span className="truncate">{room.topic}</span>
             </h2>
-            <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+            <p className="text-slate-400 text-xs mt-1 flex items-center gap-1">
               <GraduationCap size={10} /> {room.department || 'Genel'}
             </p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Oda Bilgisi</p>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Oda Bilgisi</p>
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between"><span className="text-slate-500">Kurucu</span><span className="text-white font-bold">{room.host_name}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Kapasite</span><span className="text-white font-bold">{room.participant_count}/{room.max_participants}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Durum</span><span className="text-emerald-400 font-bold capitalize">{room.status}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Konu</span><span className="text-white font-bold">{room.topic}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Kurucu</span><span className="text-white font-bold">{room.host_name}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Kapasite</span><span className="text-white font-bold">{room.participant_count}/{room.max_participants}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Durum</span><span className="text-emerald-400 font-bold capitalize">{room.status}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Konu</span><span className="text-white font-bold">{room.topic}</span></div>
               </div>
             </div>
 
             {room.description && (
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Açıklama</p>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Açıklama</p>
                 <p className="text-slate-300 text-xs leading-relaxed">{room.description}</p>
               </div>
             )}
@@ -406,7 +406,7 @@ export default function StudyRoomDetail() {
             </Link>
           </div>
 
-          <div className="p-4 border-t border-white/5 shrink-0">
+          <div className="p-4 border-t border-white/10 shrink-0">
             <button onClick={handleLeave}
               className="w-full flex items-center justify-center gap-2 text-xs font-black text-slate-400 hover:text-red-400 border border-white/10 hover:border-red-500/30 bg-white/5 hover:bg-red-500/10 py-3 rounded-xl transition-all uppercase tracking-wider">
               <LogOut size={14} /> Odadan Ayrıl
