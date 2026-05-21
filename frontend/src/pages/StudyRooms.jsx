@@ -36,6 +36,12 @@ export default function StudyRooms() {
   const [form, setForm]           = useState(EMPTY_FORM);
   const [creating, setCreating]   = useState(false);
 
+  // Katılım İstekleri States
+  const [currentUser, setCurrentUser] = useState(null);
+  const [pendingRoomId, setPendingRoomId] = useState(null);
+  const [requestStatus, setRequestStatus] = useState("waiting"); // waiting | rejected
+  const [pendingRoom, setPendingRoom]     = useState(null);
+
   // ── API: Odaları Çek ─────────────────────────────────────────
   const fetchRooms = async () => {
     try {
@@ -53,7 +59,24 @@ export default function StudyRooms() {
     }
   };
 
-  useEffect(() => { fetchRooms(); }, []);
+  useEffect(() => { 
+    fetchRooms(); 
+    
+    // Aktif kullanıcı bilgisini çek
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setCurrentUser(await res.json());
+        }
+      } catch (err) {
+        console.error('Kullanıcı bilgisi çekilemedi:', err);
+      }
+    };
+    fetchUser();
+  }, []);
 
   // ── API: Oda Oluştur ─────────────────────────────────────────
   const handleCreate = async (e) => {
@@ -98,20 +121,74 @@ export default function StudyRooms() {
     }
   };
 
-  // ── API: Odaya Katıl ─────────────────────────────────────────
-  const handleJoin = async (roomId) => {
+  // ── API: Odaya Katıl (İstek/Onay Akışı) ──────────────────────
+  const handleJoin = async (roomObj) => {
+    const roomId = roomObj.id;
+    setPendingRoom(roomObj);
     try {
-      const res = await fetch(`${API_BASE}/rooms/${roomId}/join`, {
+      const res = await fetch(`${API_BASE}/rooms/${roomId}/request-join`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (res.ok) {
-        navigate(`/study-rooms/${roomId}`);
-      } else {
+      if (!res.ok) {
         const err = await res.json();
-        toast.error(err.detail || 'Odaya katılamadınız');
+        toast.error(err.detail || 'İstek gönderilemedi');
+        return;
       }
-    } catch {
+      
+      const data = await res.json();
+      if (data.status === 'already_approved') {
+        // Zaten onaylı veya kurucu, direkt katıl
+        const joinRes = await fetch(`${API_BASE}/rooms/${roomId}/join`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (joinRes.ok) {
+          navigate(`/study-rooms/${roomId}`);
+        } else {
+          const err = await joinRes.json();
+          toast.error(err.detail || 'Odaya katılamadınız');
+        }
+      } else if (data.status === 'pending') {
+        // Bekleme durumuna al
+        setPendingRoomId(roomId);
+        setRequestStatus("waiting");
+        
+        // WS bağlantısı kur ve bekle
+        const wsUrl = API_BASE.replace(/^http/, 'ws');
+        const tempWs = new WebSocket(`${wsUrl}/rooms/ws/${roomId}?token=${token}`);
+        
+        tempWs.onmessage = async (e) => {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'request_approved' && msg.user_id === currentUser?.id) {
+            tempWs.close();
+            toast.success('Oda kurucusu katılımınızı onayladı! Giriş yapılıyor...');
+            
+            // Son kaydı tamamla ve odaya yönlendir
+            const joinRes = await fetch(`${API_BASE}/rooms/${roomId}/join`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` },
+            });
+            
+            setPendingRoomId(null);
+            setPendingRoom(null);
+            if (joinRes.ok) {
+              navigate(`/study-rooms/${roomId}`);
+            } else {
+              toast.error('Odaya katılım tamamlanamadı.');
+            }
+          } else if (msg.type === 'request_rejected' && msg.user_id === currentUser?.id) {
+            tempWs.close();
+            setRequestStatus("rejected");
+            toast.error('Oda kurucusu katılım isteğinizi reddetti.');
+          }
+        };
+        
+        tempWs.onerror = () => {
+          tempWs.close();
+        };
+      }
+    } catch (err) {
       toast.error('Bağlantı hatası');
     }
   };
@@ -346,7 +423,7 @@ export default function StudyRooms() {
                         <span className="font-bold">{room.participant_count || 0}/{room.max_participants}</span>
                       </div>
                       <button
-                        onClick={() => !isFull && handleJoin(room.id)}
+                        onClick={() => !isFull && handleJoin(room)}
                         disabled={isFull}
                         className={`flex items-center gap-1.5 text-xs font-black px-4 py-2 rounded-xl border transition-all ${
                           isFull
@@ -363,6 +440,54 @@ export default function StudyRooms() {
           </div>
         )}
       </div>
+
+      {/* KATILIM İSTEĞİ BEKLEME MODAL */}
+      {pendingRoomId && pendingRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#121826] border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center space-y-6">
+            <div className="flex flex-col items-center">
+              {requestStatus === "waiting" ? (
+                <>
+                  <div className="relative mb-4">
+                    <div className="h-16 w-16 bg-purple-500/10 rounded-full flex items-center justify-center animate-pulse">
+                      <Lock size={28} className="text-purple-400" />
+                    </div>
+                    <span className="absolute inset-0 rounded-full border-2 border-purple-500/40 animate-ping" />
+                  </div>
+                  <h3 className="text-white font-black text-lg">Katılım İsteği Gönderildi</h3>
+                  <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                    <span className="text-purple-400 font-bold">"{pendingRoom.name}"</span> odasının kurucusunun onay vermesi bekleniyor...
+                  </p>
+                  <div className="flex items-center justify-center gap-1.5 mt-4 text-xs font-bold text-slate-500 bg-white/5 border border-white/5 px-3 py-1.5 rounded-full w-fit">
+                    <Loader2 size={12} className="animate-spin text-purple-400" />
+                    Bekleniyor
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                    <AlertCircle size={28} className="text-red-400" />
+                  </div>
+                  <h3 className="text-white font-black text-lg">İstek Reddedildi</h3>
+                  <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                    Üzgünüz, oda kurucusu bu odaya katılımınızı onaylamadı.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setPendingRoomId(null);
+                setPendingRoom(null);
+              }}
+              className="w-full py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all"
+            >
+              {requestStatus === "waiting" ? "İsteği İptal Et" : "Tamam"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

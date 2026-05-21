@@ -12,6 +12,7 @@ from app.models.room_participant import RoomParticipant
 from app.models.room_message import RoomMessage
 from app.models.room_session import RoomSession
 from app.models.room_report import RoomReport
+from app.models.room_join_request import RoomJoinRequest
 from app.schemas.room import (
     RoomCreate, RoomResponse,
     MessageCreate, MessageResponse,
@@ -457,6 +458,238 @@ def admin_resolve_report(
     return {"message": f"Şikayet '{action}' olarak işaretlendi"}
 
 
+# ── 16. ODADAN KULLANICI AT (HOST) ───────────────────────────
+@router.post("/{room_id}/kick/{user_id}")
+async def kick_participant(
+    room_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    room = db.query(StudyRoom).filter(StudyRoom.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+
+    if room.host_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Yalnızca oda sahibi katılımcıları atabilir")
+
+    if user_id == room.host_id:
+        raise HTTPException(status_code=400, detail="Kendinizi odadan atamazsınız")
+
+    participant = db.query(RoomParticipant).filter(
+        RoomParticipant.room_id == room_id,
+        RoomParticipant.user_id == user_id,
+        RoomParticipant.is_active == True
+    ).first()
+
+    if not participant:
+        raise HTTPException(status_code=404, detail="Katılımcı odada bulunamadı")
+
+    participant.is_active = False
+    participant.left_at   = datetime.now()
+
+    # Sistem mesajı
+    kicked_user = db.query(User).filter(User.id == user_id).first()
+    name = kicked_user.display_name or kicked_user.email.split("@")[0] if kicked_user else "Bilinmeyen Kullanıcı"
+    msg  = RoomMessage(room_id=room_id, content=f"🚫 {name} odadan atıldı.", is_system=True)
+    db.add(msg)
+    db.commit()
+
+    # Real-time WebSocket Bildirimleri
+    await manager.send_to_user(room_id, user_id, {"type": "kicked"})
+    await manager.broadcast(room_id, {
+        "type": "system",
+        "content": f"🚫 {name} odadan atıldı.",
+        "timestamp": datetime.now().isoformat()
+    })
+    await manager.broadcast(room_id, {
+        "type": "participants",
+        "users": manager.room_users(room_id),
+        "count": manager.participant_count(room_id)
+    })
+
+    return {"message": f"{name} odadan atıldı"}
+
+
+# ── 17. ODAYA KATILMA İSTEĞİ GÖNDER ──────────────────────────
+@router.post("/{room_id}/request-join")
+async def request_join_room(
+    room_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    room = db.query(StudyRoom).filter(StudyRoom.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+    if room.status == "closed":
+        raise HTTPException(status_code=400, detail="Bu oda kapatılmış")
+    if room.active_participant_count >= room.max_participants:
+        raise HTTPException(status_code=400, detail="Oda dolu")
+
+    # Oda sahibi ise direkt onaylı sayılır
+    if room.host_id == current_user.id:
+        return {"status": "already_approved", "message": "Oda sahibisiniz."}
+
+    # Zaten aktif katılımcı ise direkt onaylı sayılır
+    existing_participant = db.query(RoomParticipant).filter(
+        RoomParticipant.room_id == room_id,
+        RoomParticipant.user_id == current_user.id,
+        RoomParticipant.is_active == True
+    ).first()
+    if existing_participant:
+        return {"status": "already_approved", "message": "Zaten odadasınız."}
+
+    # Zaten bekleyen bir isteği var mı?
+    req = db.query(RoomJoinRequest).filter(
+        RoomJoinRequest.room_id == room_id,
+        RoomJoinRequest.user_id == current_user.id,
+        RoomJoinRequest.status == "pending"
+    ).first()
+
+    if not req:
+        req = RoomJoinRequest(room_id=room_id, user_id=current_user.id, status="pending")
+        db.add(req)
+        db.commit()
+        db.refresh(req)
+
+    # Oda kurucusuna WebSocket üzerinden canlı istek gönder
+    display_name = current_user.display_name or current_user.email.split("@")[0]
+    avatar_url   = current_user.avatar_url
+    await manager.broadcast(room_id, {
+        "type": "join_request",
+        "request_id": req.id,
+        "user_id": current_user.id,
+        "display_name": display_name,
+        "avatar_url": avatar_url,
+        "timestamp": datetime.now().isoformat()
+    })
+
+    return {"status": "pending", "request_id": req.id}
+
+
+# ── 18. BEKLEYEN İSTEKLERİ LİSTELE (HOST İÇİN) ────────────────
+@router.get("/{room_id}/pending-requests")
+def get_pending_requests(
+    room_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    room = db.query(StudyRoom).filter(StudyRoom.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+    if room.host_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Yalnızca oda sahibi istekleri görebilir")
+
+    requests = db.query(RoomJoinRequest).filter(
+        RoomJoinRequest.room_id == room_id,
+        RoomJoinRequest.status == "pending"
+    ).all()
+
+    return [
+        {
+            "id": r.id,
+            "user_id": r.user_id,
+            "display_name": r.user.display_name or r.user.email.split("@")[0] if r.user else "Bilinmeyen Kullanıcı",
+            "avatar_url": r.user.avatar_url if r.user else None,
+            "created_at": r.created_at
+        }
+        for r in requests
+    ]
+
+
+# ── 19. İSTEĞİ ONAYLA (HOST) ─────────────────────────────────
+@router.post("/requests/{request_id}/approve")
+async def approve_join_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    req = db.query(RoomJoinRequest).filter(RoomJoinRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="İstek bulunamadı")
+
+    room = db.query(StudyRoom).filter(StudyRoom.id == req.room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+
+    if room.host_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Yalnızca oda sahibi istekleri onaylayabilir")
+
+    if req.status != "pending":
+        raise HTTPException(status_code=400, detail="Bu istek zaten sonuçlandırılmış")
+
+    # Katılımcıyı odaya ekle
+    req.status = "approved"
+    
+    # Zaten aktif mi kontrolü (güvenlik için)
+    existing = db.query(RoomParticipant).filter(
+        RoomParticipant.room_id == req.room_id,
+        RoomParticipant.user_id == req.user_id,
+        RoomParticipant.is_active == True
+    ).first()
+    
+    if not existing:
+        participant = RoomParticipant(room_id=req.room_id, user_id=req.user_id)
+        db.add(participant)
+
+        # Sistem mesajı
+        name = req.user.display_name or req.user.email.split("@")[0] if req.user else "Bilinmeyen"
+        msg = RoomMessage(room_id=req.room_id, content=f"👋 {name} odaya katıldı.", is_system=True)
+        db.add(msg)
+
+    db.commit()
+
+    # Canlı bildirim gönder: İstek gönderen kullanıcıyı yönlendir ve odayı güncelle
+    await manager.broadcast(req.room_id, {
+        "type": "request_approved",
+        "request_id": request_id,
+        "user_id": req.user_id
+    })
+
+    # Katılımcı listesini güncelle
+    await manager.broadcast(req.room_id, {
+        "type": "participants",
+        "users": manager.room_users(req.room_id),
+        "count": manager.participant_count(req.room_id),
+    })
+
+    return {"message": "Katılım isteği onaylandı."}
+
+
+# ── 20. İSTEĞİ REDDET (HOST) ──────────────────────────────────
+@router.post("/requests/{request_id}/reject")
+async def reject_join_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    req = db.query(RoomJoinRequest).filter(RoomJoinRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="İstek bulunamadı")
+
+    room = db.query(StudyRoom).filter(StudyRoom.id == req.room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+
+    if room.host_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Yalnızca oda sahibi istekleri reddedebilir")
+
+    if req.status != "pending":
+        raise HTTPException(status_code=400, detail="Bu istek zaten sonuçlandırılmış")
+
+    req.status = "rejected"
+    db.commit()
+
+    # Canlı bildirim gönder
+    await manager.broadcast(req.room_id, {
+        "type": "request_rejected",
+        "request_id": request_id,
+        "user_id": req.user_id
+    })
+
+    return {"message": "Katılım isteği reddedildi."}
+
+
 # ══════════════════════════════════════════════════════════════
 # ══  FAZ 2: WEBSOCKET  ═══════════════════════════════════════
 # ══════════════════════════════════════════════════════════════
@@ -536,6 +769,18 @@ async def room_websocket(websocket: WebSocket, room_id: int):
     # ── 3. Bağlan ─────────────────────────────────────────────
     await manager.connect(room_id, websocket, user.id, display_name, avatar_url)
 
+    # Bağlanan kullanıcıya güncel süreyi hemen gönder (senkronizasyon için)
+    timer_state = manager.get_timer_state(room_id)
+    await websocket.send_json({
+        "type": "timer",
+        "action": "sync",
+        "is_running": timer_state["is_running"],
+        "duration": timer_state["duration"],
+        "remaining": timer_state["remaining"],
+        "timer_type": timer_state["timer_type"],
+        "session": timer_state["session"],
+    })
+
     # Katılım bildirimini broadcast et
     await manager.broadcast(room_id, {
         "type": "system",
@@ -583,14 +828,37 @@ async def room_websocket(websocket: WebSocket, room_id: int):
                 })
 
             elif msg_type == "timer":
-                # Timer action → tüm odaya ilet
+                # Timer'ı sadece oda sahibi değiştirebilir!
+                if user.id != room.host_id:
+                    continue
+
+                action = data.get("action", "sync")
+                duration = data.get("duration")
+                remaining = data.get("remaining")
+                timer_type = data.get("timer_type")
+                session = data.get("session")
+
+                manager.update_timer(
+                    room_id=room_id,
+                    action=action,
+                    duration=duration,
+                    remaining=remaining,
+                    timer_type=timer_type,
+                    session=session
+                )
+
+                # Güncel durumu tüm odaya ilet
+                state = manager.get_timer_state(room_id)
                 await manager.broadcast(room_id, {
-                    "type":     "timer",
-                    "action":   data.get("action", "sync"),
-                    "duration": data.get("duration", 1500),
-                    "remaining": data.get("remaining", 1500),
-                    "by":       display_name,
-                    "timestamp": datetime.now().isoformat(),
+                    "type":       "timer",
+                    "action":     action,
+                    "is_running": state["is_running"],
+                    "duration":   state["duration"],
+                    "remaining":  state["remaining"],
+                    "timer_type": state["timer_type"],
+                    "session":    state["session"],
+                    "by":         display_name,
+                    "timestamp":  datetime.now().isoformat(),
                 })
 
     except WebSocketDisconnect:
