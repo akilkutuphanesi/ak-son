@@ -44,10 +44,12 @@ export default function StudyRoomDetail() {
   const [msgText, setMsgText] = useState('');
 
   // Pomodoro state
+  const [workDuration, setWorkDuration] = useState(25 * 60); // 25 dk varsayılan
+  const [customMins, setCustomMins] = useState("25");
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak]     = useState(false);
   const [session, setSession]     = useState(1);
-  const [timeLeft, setTimeLeft]   = useState(WORK_SECS);
+  const [timeLeft, setTimeLeft]   = useState(25 * 60);
   const [soundOn, setSoundOn]     = useState(true);
 
   // New Custom States for Host & Join Requests
@@ -61,7 +63,11 @@ export default function StudyRoomDetail() {
     currentUserRef.current = currentUser;
   }, [currentUser]);
 
-  const totalTime = isBreak ? (session % 4 === 0 ? LONG_BREAK : SHORT_BREAK) : WORK_SECS;
+  useEffect(() => {
+    setCustomMins(Math.round(workDuration / 60).toString());
+  }, [workDuration]);
+
+  const totalTime = isBreak ? (session % 4 === 0 ? LONG_BREAK : SHORT_BREAK) : workDuration;
   const progress  = timeLeft / totalTime;
   const dashOffset = CIRC * (1 - progress);
   const ringColor = isBreak ? '#3b82f6' : '#a855f7';
@@ -162,12 +168,17 @@ export default function StudyRoomDetail() {
         else if (data.action === 'reset') {
           setIsRunning(false);
           setIsBreak(false);
-          setTimeLeft(WORK_SECS);
+          const rSecs = data.duration || (25 * 60);
+          setTimeLeft(rSecs);
+          setWorkDuration(rSecs);
           setSession(1);
         } else if (data.action === 'sync') {
           setIsRunning(data.is_running);
           setIsBreak(data.timer_type === 'break');
           if (data.session) setSession(data.session);
+          if (data.duration && data.timer_type === 'work') {
+            setWorkDuration(data.duration);
+          }
         }
         if (data.remaining !== undefined) setTimeLeft(data.remaining);
       } else if (data.type === 'join_request') {
@@ -233,7 +244,7 @@ export default function StudyRoomDetail() {
             
             const nextDuration = nextBreak 
               ? (nextSession % 4 === 0 ? LONG_BREAK : SHORT_BREAK) 
-              : WORK_SECS;
+              : workDuration;
               
             setIsBreak(nextBreak);
             setSession(nextSession);
@@ -257,7 +268,7 @@ export default function StudyRoomDetail() {
       });
     }, 1000);
     return () => clearInterval(tick);
-  }, [isRunning, isBreak, session, isHost]);
+  }, [isRunning, isBreak, session, isHost, workDuration]);
 
   // ── Timer WS broadcast ─────────────────────────────────────
   const sendTimerAction = (action, customParams = {}) => {
@@ -280,21 +291,48 @@ export default function StudyRoomDetail() {
     sendTimerAction(nextRunning ? 'start' : 'pause');
   };
 
+  const handleCustomDurationChange = (mins) => {
+    if (!isHost) return;
+    const cappedMins = Math.max(5, Math.min(120, mins));
+    const secs = cappedMins * 60;
+    
+    setWorkDuration(secs);
+    
+    if (!isBreak) {
+      setTimeLeft(secs);
+      setIsRunning(false);
+      sendTimerAction('sync', { remaining: secs, duration: secs, timer_type: 'work' });
+    } else {
+      toast.success(`Çalışma süresi ${cappedMins} dakika olarak ayarlandı (Bir sonraki seansta geçerli olacak).`);
+    }
+  };
+
+  const handleCommitCustomMins = () => {
+    let mins = parseInt(customMins);
+    if (isNaN(mins)) {
+      setCustomMins(Math.round(workDuration / 60).toString());
+      return;
+    }
+    const cappedMins = Math.max(5, Math.min(120, mins));
+    setCustomMins(cappedMins.toString());
+    handleCustomDurationChange(cappedMins);
+  };
+
   const handleReset = () => {
     if (!isHost) return;
     setIsRunning(false);
     setIsBreak(false);
-    setTimeLeft(WORK_SECS);
+    setTimeLeft(workDuration);
     setSession(1);
-    sendTimerAction('reset');
+    sendTimerAction('reset', { duration: workDuration, remaining: workDuration });
   };
 
   const handleSelectWork = () => {
     if (!isHost) return;
     setIsBreak(false);
-    setTimeLeft(WORK_SECS);
+    setTimeLeft(workDuration);
     setIsRunning(false);
-    sendTimerAction('sync', { remaining: WORK_SECS, duration: WORK_SECS, timer_type: 'work' });
+    sendTimerAction('sync', { remaining: workDuration, duration: workDuration, timer_type: 'work' });
   };
 
   const handleSelectBreak = () => {
@@ -459,6 +497,46 @@ export default function StudyRoomDetail() {
                 </button>
               </div>
             ) : null}
+
+            {isHost && !isBreak && (
+              <div className="w-full mb-6 bg-white/5 border border-white/10 rounded-xl p-3 space-y-3 shadow-inner">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Çalışma Süresi Seçin</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[15, 25, 45, 60].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => {
+                        setCustomMins(mins.toString());
+                        handleCustomDurationChange(mins);
+                      }}
+                      className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                        (Math.round(workDuration / 60) === mins)
+                          ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
+                          : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      {mins} dk
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-bold text-slate-400 shrink-0">Özel:</span>
+                  <input
+                    type="text"
+                    value={customMins}
+                    onChange={(e) => setCustomMins(e.target.value)}
+                    onBlur={handleCommitCustomMins}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCommitCustomMins();
+                      }
+                    }}
+                    className="w-16 bg-[#0a0f1d] border border-white/10 rounded-lg py-1 px-2 text-xs font-bold text-white text-center focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                  <span className="text-[10px] font-bold text-slate-500">dk (5 - 120)</span>
+                </div>
+              </div>
+            )}
 
             {/* SVG Timer */}
             <div className="relative w-40 h-40 mb-6">

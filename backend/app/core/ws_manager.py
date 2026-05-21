@@ -48,8 +48,9 @@ class ConnectionManager:
             timer["last_updated"] = datetime.now()
         elif action == "reset":
             timer["is_running"] = False
-            timer["duration"] = 1500
-            timer["remaining"] = 1500
+            reset_duration = duration if duration is not None else timer["duration"]
+            timer["duration"] = reset_duration
+            timer["remaining"] = reset_duration
             timer["timer_type"] = "work"
             timer["session"] = 1
             timer["last_updated"] = datetime.now()
