@@ -240,10 +240,10 @@ export default function StudyRoomDetail() {
       </header>
 
       {/* ANA LAYOUT */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden relative z-10">
 
         {/* SOL: Pomodoro */}
-        <aside className="w-72 border-r border-white/10 bg-[#0c1120]/60 backdrop-blur-sm flex flex-col shrink-0 overflow-y-auto">
+        <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#0c1120]/60 backdrop-blur-sm flex flex-col shrink-0 lg:overflow-y-auto">
           <div className="p-6 flex flex-col items-center">
             <div className="flex gap-2 mb-6 w-full">
               <button onClick={() => { setIsBreak(false); setTimeLeft(WORK_SECS); setIsRunning(false); }}
@@ -320,7 +320,7 @@ export default function StudyRoomDetail() {
         </aside>
 
         {/* ORTA: Sohbet */}
-        <div className="flex-1 flex flex-col border-r border-white/10 min-w-0">
+        <div className="flex-1 w-full flex flex-col lg:border-r border-white/10 min-w-0 min-h-[500px] lg:min-h-0">
           <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
             <h2 className="text-white font-bold text-sm flex items-center gap-2">
               <MessageSquare size={16} className="text-purple-400" /> Oda Sohbeti
@@ -356,7 +356,7 @@ export default function StudyRoomDetail() {
             <div ref={chatEndRef} />
           </div>
 
-          <div className="p-4 border-t border-white/5 shrink-0">
+          <div className="p-4 border-t border-white/5 shrink-0 bg-[#0c1120]/60 lg:bg-transparent backdrop-blur-md sticky bottom-0 z-20">
             <div className="flex gap-2">
               <input type="text" value={msgText} onChange={e => setMsgText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendMessage()}
@@ -371,7 +371,7 @@ export default function StudyRoomDetail() {
         </div>
 
         {/* SAĞ: Bilgi + Çıkış */}
-        <aside className="w-80 bg-[#0c1120]/60 backdrop-blur-sm flex flex-col shrink-0 overflow-hidden">
+        <aside className="w-full lg:w-80 bg-[#0c1120]/60 backdrop-blur-sm flex flex-col shrink-0 lg:overflow-hidden border-t lg:border-t-0 border-white/10">
           <div className="p-4 border-b border-white/5 shrink-0">
             <h2 className="text-white font-bold text-sm flex items-center gap-2">
               <BookOpen size={16} className="text-amber-400" />

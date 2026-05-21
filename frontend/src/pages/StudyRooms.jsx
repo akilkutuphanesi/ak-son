@@ -237,7 +237,7 @@ export default function StudyRooms() {
       <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
 
         {/* İSTATİSTİK KARTLARI */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
             { label: 'Aktif Oda',       value: stats.active, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: <Zap size={20} /> },
             { label: 'Çalışan Öğrenci', value: stats.total,  color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: <Users size={20} /> },
