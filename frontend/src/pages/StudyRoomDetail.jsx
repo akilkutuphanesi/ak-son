@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Timer, Coffee, Play, Pause, RotateCcw,
   Users, MessageSquare, BookOpen, Send, Bell, BellOff,
-  Zap, Clock, Star, GraduationCap, Loader2, LogOut
+  Zap, Clock, Star, GraduationCap, Loader2, LogOut,
+  Trash2, Check, X
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -43,16 +44,68 @@ export default function StudyRoomDetail() {
   const [msgText, setMsgText] = useState('');
 
   // Pomodoro state
+  const [workDuration, setWorkDuration] = useState(25 * 60); // 25 dk varsayılan
+  const [customMins, setCustomMins] = useState("25");
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak]     = useState(false);
   const [session, setSession]     = useState(1);
-  const [timeLeft, setTimeLeft]   = useState(WORK_SECS);
+  const [timeLeft, setTimeLeft]   = useState(25 * 60);
   const [soundOn, setSoundOn]     = useState(true);
 
-  const totalTime = isBreak ? (session % 4 === 0 ? LONG_BREAK : SHORT_BREAK) : WORK_SECS;
+  // New Custom States for Host & Join Requests
+  const [currentUser, setCurrentUser] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
+
+  const isHost = room && currentUser && room.host_id === currentUser.id;
+  const currentUserRef = useRef(currentUser);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  useEffect(() => {
+    setCustomMins(Math.round(workDuration / 60).toString());
+  }, [workDuration]);
+
+  const totalTime = isBreak ? (session % 4 === 0 ? LONG_BREAK : SHORT_BREAK) : workDuration;
   const progress  = timeLeft / totalTime;
   const dashOffset = CIRC * (1 - progress);
   const ringColor = isBreak ? '#3b82f6' : '#a855f7';
+
+  // ── API: Aktif Kullanıcı Profil Çek ─────────────────────────
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setCurrentUser(await res.json());
+        }
+      } catch (err) {
+        console.error('Kullanıcı bilgisi alınamadı:', err);
+      }
+    };
+    fetchUser();
+  }, [token]);
+
+  // ── API: Bekleyen Katılım İstekleri Çek (Sadece Host için) ──
+  useEffect(() => {
+    if (!isHost) return;
+    const fetchPendingRequests = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${id}/pending-requests`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setPendingRequests(await res.json());
+        }
+      } catch (err) {
+        console.error('Bekleyen katılım istekleri alınamadı:', err);
+      }
+    };
+    fetchPendingRequests();
+  }, [id, isHost, token]);
 
   // ── API: Oda bilgisi ───────────────────────────────────────
   useEffect(() => {
@@ -111,21 +164,56 @@ export default function StudyRoomDetail() {
         setParticipants(data.users || []);
       } else if (data.type === 'timer') {
         if (data.action === 'start')  setIsRunning(true);
-        if (data.action === 'pause')  setIsRunning(false);
-        if (data.action === 'reset') { setIsRunning(false); setIsBreak(false); setTimeLeft(WORK_SECS); }
-        if (data.remaining) setTimeLeft(data.remaining);
+        else if (data.action === 'pause')  setIsRunning(false);
+        else if (data.action === 'reset') {
+          setIsRunning(false);
+          setIsBreak(false);
+          const rSecs = data.duration || (25 * 60);
+          setTimeLeft(rSecs);
+          setWorkDuration(rSecs);
+          setSession(1);
+        } else if (data.action === 'sync') {
+          setIsRunning(data.is_running);
+          setIsBreak(data.timer_type === 'break');
+          if (data.session) setSession(data.session);
+          if (data.duration && data.timer_type === 'work') {
+            setWorkDuration(data.duration);
+          }
+        }
+        if (data.remaining !== undefined) setTimeLeft(data.remaining);
+      } else if (data.type === 'join_request') {
+        setPendingRequests(prev => {
+          if (prev.some(req => req.id === data.request_id)) return prev;
+          return [...prev, {
+            id: data.request_id,
+            user_id: data.user_id,
+            display_name: data.display_name,
+            avatar_url: data.avatar_url,
+            created_at: data.timestamp
+          }];
+        });
+        toast.success(`👋 ${data.display_name} odaya katılmak istiyor!`, { icon: '🔔', duration: 4000 });
+      } else if (data.type === 'request_approved' || data.type === 'request_rejected') {
+        setPendingRequests(prev => prev.filter(req => req.id !== data.request_id));
+      } else if (data.type === 'kicked') {
+        toast.error('Oda sahibi tarafından odadan atıldınız!', { duration: 3000 });
+        setTimeout(() => {
+          navigate('/study-rooms');
+        }, 1500);
+      } else if (data.type === 'room_closed') {
+        toast.error('Oda kapatıldı veya silindi.', { duration: 3000 });
+        setTimeout(() => {
+          navigate('/study-rooms');
+        }, 1500);
       }
     };
 
     ws.onerror = (err) => {
       console.log("WS anlık kopma (Strict Mode):", err);
-      // toast.error('WebSocket bağlantı hatası'); // <-- Ekrana fırlamasını engellemek için yoruma aldık!
     };
 
     ws.onclose = (event) => {
       console.log("WebSocket kapandı. Kapanma Kodu:", event.code);
-      
-      // 1000: Normal, 1001: Sayfa değişimi, 1005/1006: React Strict Mode anlık kopmaları
       if (event.code !== 1000 && event.code !== 1001 && event.code !== 1005 && event.code !== 1006) {
         toast.error('Oda sunucusuyla bağlantı koptu.');
       }
@@ -146,36 +234,168 @@ export default function StudyRoomDetail() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(tick);
-          if (!isBreak) {
-            setIsBreak(true);
-            setSession(s => s + 1);
-            return session % 4 === 0 ? LONG_BREAK : SHORT_BREAK;
+          
+          if (isHost) {
+            const nextBreak = !isBreak;
+            let nextSession = session;
+            if (!isBreak) {
+              nextSession = session + 1;
+            }
+            
+            const nextDuration = nextBreak 
+              ? (nextSession % 4 === 0 ? LONG_BREAK : SHORT_BREAK) 
+              : workDuration;
+              
+            setIsBreak(nextBreak);
+            setSession(nextSession);
+            
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({
+                type: 'timer',
+                action: 'sync',
+                remaining: nextDuration,
+                duration: nextDuration,
+                timer_type: nextBreak ? 'break' : 'work',
+                session: nextSession
+              }));
+            }
+            return nextDuration;
           } else {
-            setIsBreak(false);
-            return WORK_SECS;
+            return 0;
           }
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(tick);
-  }, [isRunning, isBreak, session]);
+  }, [isRunning, isBreak, session, isHost, workDuration]);
 
   // ── Timer WS broadcast ─────────────────────────────────────
-  const sendTimerAction = (action) => {
+  const sendTimerAction = (action, customParams = {}) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'timer', action, remaining: timeLeft, duration: totalTime }));
+      wsRef.current.send(JSON.stringify({
+        type: 'timer',
+        action,
+        remaining: customParams.remaining !== undefined ? customParams.remaining : timeLeft,
+        duration: customParams.duration !== undefined ? customParams.duration : totalTime,
+        timer_type: customParams.timer_type !== undefined ? customParams.timer_type : (isBreak ? 'break' : 'work'),
+        session: customParams.session !== undefined ? customParams.session : session
+      }));
     }
   };
 
   const handlePlayPause = () => {
-    setIsRunning(r => !r);
-    sendTimerAction(isRunning ? 'pause' : 'start');
+    if (!isHost) return;
+    const nextRunning = !isRunning;
+    setIsRunning(nextRunning);
+    sendTimerAction(nextRunning ? 'start' : 'pause');
+  };
+
+  const handleCustomDurationChange = (mins) => {
+    if (!isHost) return;
+    const cappedMins = Math.max(5, Math.min(120, mins));
+    const secs = cappedMins * 60;
+    
+    setWorkDuration(secs);
+    
+    if (!isBreak) {
+      setTimeLeft(secs);
+      setIsRunning(false);
+      sendTimerAction('sync', { remaining: secs, duration: secs, timer_type: 'work' });
+    } else {
+      toast.success(`Çalışma süresi ${cappedMins} dakika olarak ayarlandı (Bir sonraki seansta geçerli olacak).`);
+    }
+  };
+
+  const handleCommitCustomMins = () => {
+    let mins = parseInt(customMins);
+    if (isNaN(mins)) {
+      setCustomMins(Math.round(workDuration / 60).toString());
+      return;
+    }
+    const cappedMins = Math.max(5, Math.min(120, mins));
+    setCustomMins(cappedMins.toString());
+    handleCustomDurationChange(cappedMins);
   };
 
   const handleReset = () => {
-    setIsRunning(false); setIsBreak(false); setTimeLeft(WORK_SECS);
-    sendTimerAction('reset');
+    if (!isHost) return;
+    setIsRunning(false);
+    setIsBreak(false);
+    setTimeLeft(workDuration);
+    setSession(1);
+    sendTimerAction('reset', { duration: workDuration, remaining: workDuration });
+  };
+
+  const handleSelectWork = () => {
+    if (!isHost) return;
+    setIsBreak(false);
+    setTimeLeft(workDuration);
+    setIsRunning(false);
+    sendTimerAction('sync', { remaining: workDuration, duration: workDuration, timer_type: 'work' });
+  };
+
+  const handleSelectBreak = () => {
+    if (!isHost) return;
+    setIsRunning(false);
+    setIsBreak(true);
+    setTimeLeft(SHORT_BREAK);
+    sendTimerAction('sync', { remaining: SHORT_BREAK, duration: SHORT_BREAK, timer_type: 'break' });
+  };
+
+  // ── Host İşlemleri (Katılım İstekleri & Katılımcı Atma) ─────
+  const handleApproveRequest = async (requestId) => {
+    try {
+      const res = await fetch(`${API_BASE}/rooms/requests/${requestId}/approve`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('Katılım isteği onaylandı.');
+        setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'İstek onaylanamadı.');
+      }
+    } catch {
+      toast.error('Bağlantı hatası');
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    try {
+      const res = await fetch(`${API_BASE}/rooms/requests/${requestId}/reject`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('Katılım isteği reddedildi.');
+        setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'İstek reddedilemedi.');
+      }
+    } catch {
+      toast.error('Bağlantı hatası');
+    }
+  };
+
+  const handleKickParticipant = async (userId, name) => {
+    if (!window.confirm(`${name} kullanıcısını odadan atmak istediğinize emin misiniz?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/rooms/${id}/kick/${userId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success(`${name} odadan atıldı.`);
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'Kullanıcı odadan atılamadı.');
+      }
+    } catch {
+      toast.error('Bağlantı hatası');
+    }
   };
 
   // ── Chat mesaj gönder ──────────────────────────────────────
@@ -198,6 +418,26 @@ export default function StudyRoomDetail() {
       });
     } catch {}
     navigate('/study-rooms');
+  };
+
+  // ── Odayı kapat/sil (Sadece kurucu için) ────────────────────
+  const handleDeleteRoom = async () => {
+    if (!window.confirm('Bu odayı kapatmak ve tüm katılımcıları çıkarmak istediğinize emin misiniz?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/rooms/${id}/close`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success('Oda başarıyla kapatıldı.');
+        navigate('/study-rooms');
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'Oda kapatılamadı.');
+      }
+    } catch {
+      toast.error('Bağlantı hatası');
+    }
   };
 
   if (loading) {
@@ -245,16 +485,58 @@ export default function StudyRoomDetail() {
         {/* SOL: Pomodoro */}
         <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#0c1120]/60 backdrop-blur-sm flex flex-col shrink-0 lg:overflow-y-auto">
           <div className="p-6 flex flex-col items-center">
-            <div className="flex gap-2 mb-6 w-full">
-              <button onClick={() => { setIsBreak(false); setTimeLeft(WORK_SECS); setIsRunning(false); }}
-                className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${!isBreak ? 'bg-purple-600 text-white border-purple-500' : 'bg-white/5 text-slate-400 border-white/10'}`}>
-                Çalışma
-              </button>
-              <button onClick={() => { setIsRunning(false); setIsBreak(true); setTimeLeft(SHORT_BREAK); }}
-                className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${isBreak ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-white/10'}`}>
-                Mola
-              </button>
-            </div>
+            {isHost ? (
+              <div className="flex gap-2 mb-6 w-full">
+                <button onClick={handleSelectWork}
+                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${!isBreak ? 'bg-purple-600 text-white border-purple-500' : 'bg-white/5 text-slate-400 border-white/10'}`}>
+                  Çalışma
+                </button>
+                <button onClick={handleSelectBreak}
+                  className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${isBreak ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-slate-400 border-white/10'}`}>
+                  Mola
+                </button>
+              </div>
+            ) : null}
+
+            {isHost && !isBreak && (
+              <div className="w-full mb-6 bg-white/5 border border-white/10 rounded-xl p-3 space-y-3 shadow-inner">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Çalışma Süresi Seçin</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[15, 25, 45, 60].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => {
+                        setCustomMins(mins.toString());
+                        handleCustomDurationChange(mins);
+                      }}
+                      className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                        (Math.round(workDuration / 60) === mins)
+                          ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
+                          : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      {mins} dk
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-bold text-slate-400 shrink-0">Özel:</span>
+                  <input
+                    type="text"
+                    value={customMins}
+                    onChange={(e) => setCustomMins(e.target.value)}
+                    onBlur={handleCommitCustomMins}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCommitCustomMins();
+                      }
+                    }}
+                    className="w-16 bg-[#0a0f1d] border border-white/10 rounded-lg py-1 px-2 text-xs font-bold text-white text-center focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                  <span className="text-[10px] font-bold text-slate-500">dk (5 - 120)</span>
+                </div>
+              </div>
+            )}
 
             {/* SVG Timer */}
             <div className="relative w-40 h-40 mb-6">
@@ -271,19 +553,31 @@ export default function StudyRoomDetail() {
             </div>
 
             {/* Kontroller */}
-            <div className="flex items-center gap-3 mb-6">
-              <button onClick={handleReset} className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
-                <RotateCcw size={16} />
-              </button>
-              <button onClick={handlePlayPause}
-                className={`px-8 py-3 rounded-xl font-black text-sm flex items-center gap-2 transition-all shadow-lg hover:scale-105 active:scale-95 ${isRunning ? 'bg-white/10 border border-white/20 text-white' : 'text-white'}`}
-                style={!isRunning ? { backgroundColor: ringColor, boxShadow: `0 8px 24px ${ringColor}44` } : {}}>
-                {isRunning ? <><Pause size={16} /> Duraklat</> : <><Play size={16} /> Başlat</>}
-              </button>
-              <button onClick={() => setSoundOn(s => !s)} className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
-                {soundOn ? <Bell size={16} /> : <BellOff size={16} />}
-              </button>
-            </div>
+            {isHost ? (
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={handleReset} className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                  <RotateCcw size={16} />
+                </button>
+                <button onClick={handlePlayPause}
+                  className={`px-8 py-3 rounded-xl font-black text-sm flex items-center gap-2 transition-all shadow-lg hover:scale-105 active:scale-95 ${isRunning ? 'bg-white/10 border border-white/20 text-white' : 'text-white'}`}
+                  style={!isRunning ? { backgroundColor: ringColor, boxShadow: `0 8px 24px ${ringColor}44` } : {}}>
+                  {isRunning ? <><Pause size={16} /> Duraklat</> : <><Play size={16} /> Başlat</>}
+                </button>
+                <button onClick={() => setSoundOn(s => !s)} className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                  {soundOn ? <Bell size={16} /> : <BellOff size={16} />}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center w-full mb-6 gap-4">
+                <div className="text-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-purple-300 font-medium flex items-center gap-2 justify-center shadow-inner">
+                  <Clock size={14} className="text-purple-400 animate-pulse" />
+                  <span>Süre oda kurucusu tarafından kontrol ediliyor</span>
+                </div>
+                <button onClick={() => setSoundOn(s => !s)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all text-xs font-bold">
+                  {soundOn ? <><Bell size={14} /> Bildirim Sesi Açık</> : <><BellOff size={14} /> Bildirim Sesi Kapalı</>}
+                </button>
+              </div>
+            )}
 
             {/* Seans noktaları */}
             <div className="flex items-center gap-2 mb-6">
@@ -307,12 +601,27 @@ export default function StudyRoomDetail() {
             </p>
             <div className="space-y-2">
               {participants.map((p, i) => (
-                <div key={p.user_id || i} className="flex items-center gap-2.5">
+                <div key={p.user_id || i} className="flex items-center gap-2.5 group/part animate-fade-in">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center text-[10px] font-black text-white shrink-0">
                     {(p.display_name || '?')[0].toUpperCase()}
                   </div>
                   <span className="text-slate-300 text-xs font-bold flex-1 truncate">{p.display_name || 'Anonim'}</span>
-                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">🍅</span>
+                  <div className="flex items-center gap-1.5">
+                    {p.user_id === room.host_id ? (
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400">HOST</span>
+                    ) : (
+                      <>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">🍅</span>
+                        {isHost && (
+                          <button onClick={() => handleKickParticipant(p.user_id, p.display_name || 'Anonim')}
+                            title="Katılımcıyı Odadan At"
+                            className="p-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all opacity-0 group-hover/part:opacity-100 focus:opacity-100">
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -383,6 +692,41 @@ export default function StudyRoomDetail() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {isHost && pendingRequests.length > 0 && (
+              <div className="bg-purple-950/20 border border-purple-500/20 rounded-xl p-4 shadow-lg animate-fade-in">
+                <p className="text-[11px] font-black text-purple-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                  Katılım İstekleri ({pendingRequests.length})
+                </p>
+                <div className="space-y-3">
+                  {pendingRequests.map((req) => (
+                    <div key={req.id} className="flex items-center justify-between gap-2 bg-white/5 border border-white/5 rounded-xl p-2 animate-fade-in">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-700 flex items-center justify-center text-[10px] font-black text-white shrink-0">
+                          {(req.display_name || '?')[0].toUpperCase()}
+                        </div>
+                        <span className="text-slate-200 text-xs font-bold truncate max-w-[100px]" title={req.display_name}>
+                          {req.display_name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleApproveRequest(req.id)}
+                          title="Onayla"
+                          className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 transition-all">
+                          <Check size={12} />
+                        </button>
+                        <button onClick={() => handleRejectRequest(req.id)}
+                          title="Reddet"
+                          className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-all">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
               <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Oda Bilgisi</p>
               <div className="space-y-2 text-xs">
@@ -406,7 +750,13 @@ export default function StudyRoomDetail() {
             </Link>
           </div>
 
-          <div className="p-4 border-t border-white/10 shrink-0">
+          <div className="p-4 border-t border-white/10 shrink-0 space-y-2">
+            {isHost && (
+              <button onClick={handleDeleteRoom}
+                className="w-full flex items-center justify-center gap-2 text-xs font-black text-red-200 border border-red-500/30 hover:border-red-500/60 bg-red-500/20 hover:bg-red-500/30 py-3 rounded-xl transition-all uppercase tracking-wider shadow-[0_0_15px_rgba(239,68,68,0.1)] hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                <Trash2 size={14} className="text-red-400" /> Odayı Sil / Kapat
+              </button>
+            )}
             <button onClick={handleLeave}
               className="w-full flex items-center justify-center gap-2 text-xs font-black text-slate-400 hover:text-red-400 border border-white/10 hover:border-red-500/30 bg-white/5 hover:bg-red-500/10 py-3 rounded-xl transition-all uppercase tracking-wider">
               <LogOut size={14} /> Odadan Ayrıl
