@@ -898,9 +898,9 @@ export default function Dashboard() {
 
             {/* --- ALT NAVİGASYON VE FİLTRE --- */}
             {viewMode === 'feed' && (
-                <div className="fixed bottom-6 left-4 z-40 flex flex-col items-start gap-4">
+                <div className="fixed bottom-4 md:bottom-6 left-0 md:left-4 w-full md:w-auto z-40 flex flex-row md:flex-col items-end md:items-start justify-center md:justify-start gap-2 md:gap-4 px-4 md:px-0 pointer-events-none">
                     {isFilterOpen && (
-                        <div className="bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-[min(320px,calc(100vw-2rem))] max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300">
+                        <div className="pointer-events-auto bg-[#161b2c]/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl w-[min(320px,calc(100vw-2rem))] max-h-96 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-4 duration-300 absolute md:relative bottom-[110%] md:bottom-auto mb-4 md:mb-0">
                             <div className="flex justify-between items-center mb-4 px-2">
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2"><Filter size={12} /> Bölüm Filtrele</h2>
                                 <button onClick={() => setIsFilterOpen(false)} className="hover:text-red-500"><X size={16} /></button>
@@ -914,20 +914,21 @@ export default function Dashboard() {
                             </nav>
                         </div>
                     )}
-                    <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">
+                    <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="pointer-events-auto group flex items-center gap-2 md:gap-3 bg-red-600 text-white px-4 md:px-6 py-3 md:py-4 rounded-full font-bold shadow-2xl hover:bg-red-700 transition-all hover:scale-105 active:scale-95 shadow-red-900/40 relative">
                         {isFilterOpen ? <X size={20} /> : <Filter size={20} />}
-                        <span className="text-sm max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
+                        <span className="text-xs md:text-sm max-w-[80px] md:max-w-[100px] truncate">{selectedDepartment === "Tümü" ? "Filtrele" : selectedDepartment}</span>
                         {selectedDepartment !== "Tümü" && !isFilterOpen && <div onClick={clearFilter} className="absolute -top-2 -right-2 bg-white text-red-600 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#0a0f1d] hover:scale-110 shadow-sm"><X size={14} strokeWidth={3} /></div>}
                     </button>
                     {viewMode === 'feed' && (
                         <>
-                            <button onClick={() => setViewMode('trending')} className="group flex items-center gap-3 bg-white/5 border border-white/10 text-orange-400 px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-orange-500/10 hover:border-orange-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
+                            <button onClick={() => setViewMode('trending')} className="pointer-events-auto group flex items-center gap-2 md:gap-3 bg-[#161b2c]/80 md:bg-white/5 border border-white/10 text-orange-400 px-4 md:px-6 py-3 md:py-4 rounded-full font-bold shadow-2xl hover:bg-orange-500/10 hover:border-orange-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
                                 <Flame size={20} className="animate-pulse" />
-                                <span className="text-sm max-w-[100px] truncate">Popüler</span>
+                                <span className="text-xs md:text-sm max-w-[80px] md:max-w-[100px] truncate">Popüler</span>
                             </button>
-                            <button onClick={() => { setViewMode('leaderboard'); fetchLeaderboard(); }} className="group flex items-center gap-3 bg-white/5 border border-white/10 text-yellow-400 px-6 py-4 rounded-full font-bold shadow-2xl hover:bg-yellow-500/10 hover:border-yellow-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
+                            <button onClick={() => { setViewMode('leaderboard'); fetchLeaderboard(); }} className="pointer-events-auto group flex items-center gap-2 md:gap-3 bg-[#161b2c]/80 md:bg-white/5 border border-white/10 text-yellow-400 px-4 md:px-6 py-3 md:py-4 rounded-full font-bold shadow-2xl hover:bg-yellow-500/10 hover:border-yellow-500/30 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl">
                                 <Trophy size={20} />
-                                <span className="text-sm max-w-[150px] truncate hidden sm:inline">Liderlik Tablosu</span>
+                                <span className="text-xs md:text-sm max-w-[100px] md:max-w-[150px] truncate hidden sm:inline">Liderlik Tablosu</span>
+                                <span className="text-xs sm:hidden">Liderler</span>
                             </button>
                         </>
                     )}
