@@ -104,7 +104,7 @@ export default function Register() {
         </div>
 
         {/* Sağ Panel: Form */}
-        <div className="md:col-span-7 bg-[#121826]/40 p-6 md:p-14 flex flex-col justify-center min-h-auto md:min-h-[750px]">
+        <div className="md:col-span-7 bg-[#161b2c]/40 p-6 md:p-14 flex flex-col justify-center min-h-auto md:min-h-[750px]">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-0 mb-6 md:mb-8">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">Yeni Hesap Oluştur</h2>
@@ -127,11 +127,11 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative group">
-                <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors" size={18} />
                 <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Adınız" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
               </div>
               <div className="relative group">
-                <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+                <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors" size={18} />
                 <input type="text" name="surname" value={formData.surname} onChange={handleChange} placeholder="Soyadınız" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
               </div>
             </div>
@@ -180,16 +180,16 @@ export default function Register() {
                   <option value="Gastronomi ve Mutfak Sanatları">Gastronomi ve Mutfak Sanatları</option>
                 </optgroup>
               </select>
-              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={20} />
+              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
             </div>
 
             <div className="relative group">
-              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors" size={18} />
               <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="örnek@universite.edu.tr" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
             </div>
 
             <div className="relative group">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors" size={18} />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
@@ -202,7 +202,7 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors focus:outline-none"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors focus:outline-none"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -224,7 +224,7 @@ export default function Register() {
           </form>
 
           <div className="mt-4 text-center">
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-400 text-sm">
               Zaten bir hesabın var mı? <Link to="/login" className="text-white font-bold hover:text-red-500 underline">Giriş Yap</Link>
             </p>
           </div>

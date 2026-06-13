@@ -111,19 +111,19 @@ function CodeCard({ q }) {
   return (
     <div className="bg-[#0d1117] border border-emerald-500/20 rounded-2xl overflow-hidden hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all group shadow-lg shadow-emerald-900/10">
       {/* IDE Başlık Çubuğu */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/5">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-b border-white/10">
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500/80" />
           <div className="w-3 h-3 rounded-full bg-amber-500/80" />
           <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
         </div>
-        <span className="text-slate-500 text-xs font-mono ml-2 flex-1">
+        <span className="text-slate-400 text-xs font-mono ml-2 flex-1">
           {q.lang === 'Python' ? 'solution.py' : 'App.jsx'}
         </span>
         <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
           <Code2 size={9} /> {q.lang}
         </span>
-        <button onClick={handleCopy} className="text-slate-500 hover:text-white transition-colors ml-2">
+        <button onClick={handleCopy} className="text-slate-400 hover:text-white transition-colors ml-2">
           {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
         </button>
       </div>
@@ -133,14 +133,14 @@ function CodeCard({ q }) {
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center text-[10px] font-black text-white">{q.author[0]}</div>
           <span className="text-white font-bold text-xs">{q.author}</span>
           <span className="text-slate-600 text-[10px]">•</span>
-          <span className="text-slate-500 text-[10px]">{q.dept}</span>
+          <span className="text-slate-400 text-[10px]">{q.dept}</span>
           <span className="text-slate-600 text-[10px] ml-auto">{q.time}</span>
         </div>
         <h3 className="text-white font-bold text-base leading-snug mb-1 group-hover:text-emerald-300 transition-colors">{q.title}</h3>
         <p className="text-slate-400 text-sm">{q.body}</p>
       </div>
       {/* Kod Bloğu */}
-      <div className="mx-4 mb-4 bg-[#0a0f1a] border border-white/5 rounded-xl overflow-hidden">
+      <div className="mx-4 mb-4 bg-[#0a0f1a] border border-white/10 rounded-xl overflow-hidden">
         <div className="overflow-x-auto p-4">
           <table className="w-full border-collapse">
             <tbody>
@@ -151,7 +151,7 @@ function CodeCard({ q }) {
                     {line.split(/(["'].*?["']|\b(?:def|return|if|else|for|while|import|const|let|var|function|async|await|useEffect|setData|fetch|then)\b|#.*|\/\/.*)/).map((part, j) => {
                       if (/^["']/.test(part) || /^`/.test(part)) return <span key={j} className="text-lime-400">{part}</span>;
                       if (/^(def|return|if|else|for|while|import|const|let|var|function|async|await|useEffect|setData|fetch|then)$/.test(part)) return <span key={j} className="text-purple-400">{part}</span>;
-                      if (/^(#|\/\/)/.test(part)) return <span key={j} className="text-slate-500 italic">{part}</span>;
+                      if (/^(#|\/\/)/.test(part)) return <span key={j} className="text-slate-400 italic">{part}</span>;
                       return <span key={j}>{part}</span>;
                     })}
                   </td>
@@ -187,7 +187,7 @@ function FormulaCard({ q }) {
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-[10px] font-black text-white">{q.author[0]}</div>
           <span className="text-white font-bold text-xs">{q.author}</span>
-          <span className="text-slate-500 text-[10px]">{q.dept}</span>
+          <span className="text-slate-400 text-[10px]">{q.dept}</span>
           <span className="text-slate-600 text-[10px] ml-auto">{q.time}</span>
         </div>
         <h3 className="text-white font-bold text-base leading-snug mb-1 group-hover:text-amber-300 transition-colors">{q.title}</h3>
@@ -224,7 +224,7 @@ function ImageCard({ q }) {
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-[10px] font-black text-white">{q.author[0]}</div>
           <span className="text-white font-bold text-xs">{q.author}</span>
-          <span className="text-slate-500 text-[10px]">{q.dept}</span>
+          <span className="text-slate-400 text-[10px]">{q.dept}</span>
           <span className="text-slate-600 text-[10px] ml-auto">{q.time}</span>
         </div>
         <h3 className="text-white font-bold text-base leading-snug mb-1 group-hover:text-blue-300 transition-colors">{q.title}</h3>
@@ -254,11 +254,11 @@ function TextCard({ q }) {
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center text-[10px] font-black text-white">{q.author[0]}</div>
           <span className="text-white font-bold text-xs">{q.author}</span>
-          <span className="text-slate-500 text-[10px]">{q.dept}</span>
+          <span className="text-slate-400 text-[10px]">{q.dept}</span>
           <span className="text-slate-600 text-[10px] ml-auto">{q.time}</span>
         </div>
         <h3 className="text-white font-bold text-base leading-snug mb-2 group-hover:text-purple-300 transition-colors">{q.title}</h3>
-        <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-3">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-3">
           <p className="text-slate-300 text-sm leading-relaxed">{q.body}</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -283,15 +283,15 @@ function CardFooter({ q, accentColor }) {
   const [liked, setLiked] = useState(false);
   const a = accentMap[accentColor] || accentMap.emerald;
   return (
-    <div className="flex items-center justify-between px-5 pb-4 pt-2 border-t border-white/5 mt-1">
+    <div className="flex items-center justify-between px-5 pb-4 pt-2 border-t border-white/10 mt-1">
       <div className="flex items-center gap-4">
-        <button onClick={() => setLiked(l => !l)} className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${liked ? 'text-red-400' : 'text-slate-500 ' + a.like}`}>
+        <button onClick={() => setLiked(l => !l)} className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${liked ? 'text-red-400' : 'text-slate-400 ' + a.like}`}>
           <Heart size={14} fill={liked ? 'currentColor' : 'none'} /> {q.likes + (liked ? 1 : 0)}
         </button>
-        <button className={`flex items-center gap-1.5 text-xs font-bold text-slate-500 ${a.like} transition-colors`}>
+        <button className={`flex items-center gap-1.5 text-xs font-bold text-slate-400 ${a.like} transition-colors`}>
           <MessageSquare size={14} /> {q.answers} cevap
         </button>
-        <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors">
+        <button className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-300 transition-colors">
           <Share2 size={14} />
         </button>
       </div>
@@ -361,7 +361,7 @@ export default function DynamicCardsDemo() {
             <h1 className="text-white font-black text-lg">Akıllı <span className="text-purple-400">Soru Akışı</span></h1>
           </div>
         </div>
-        <p className="text-slate-500 text-xs hidden md:block">İçeriğe göre otomatik kart şablonu</p>
+        <p className="text-slate-400 text-xs hidden md:block">İçeriğe göre otomatik kart şablonu</p>
       </nav>
 
       <div className="max-w-3xl mx-auto px-6 py-8 relative z-10">

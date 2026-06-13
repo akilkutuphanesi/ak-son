@@ -68,7 +68,7 @@ export default function ForgotPassword() {
         </div>
 
         {/* SAĞ PANEL */}
-        <div className="md:col-span-7 bg-[#121826]/40 p-6 md:p-14 flex flex-col justify-center">
+        <div className="md:col-span-7 bg-[#161b2c]/40 p-6 md:p-14 flex flex-col justify-center">
           <div className="flex justify-between items-start mb-6 md:mb-10">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 flex items-center gap-2 md:gap-3 flex-wrap">
@@ -110,7 +110,7 @@ export default function ForgotPassword() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative group">
                 <Mail
-                  className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors"
+                  className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors"
                   size={18}
                 />
                 <input
@@ -139,7 +139,7 @@ export default function ForgotPassword() {
 
           {!success && (
             <div className="mt-8 text-center">
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-400 text-sm">
                 Şifreni hatırladın mı?{' '}
                 <Link to="/login" className="text-white font-bold hover:text-red-500 underline">
                   Giriş Yap

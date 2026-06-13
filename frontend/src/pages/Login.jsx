@@ -85,7 +85,7 @@ export default function Login() {
         </div>
 
         {/* SAĞ PANEL */}
-        <div className="md:col-span-7 bg-[#121826]/40 p-6 md:p-14 flex flex-col justify-center">
+        <div className="md:col-span-7 bg-[#161b2c]/40 p-6 md:p-14 flex flex-col justify-center">
           <div className="flex justify-between items-start mb-6 md:mb-10">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 flex items-center gap-2 md:gap-3 flex-wrap">
@@ -99,12 +99,12 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative group">
-              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors" size={18} />
               <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Örn: isim.soyisim@universite.edu.tr veya admin" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
             </div>
 
             <div className="relative group">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors" size={18} />
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
@@ -116,7 +116,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors focus:outline-none"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors focus:outline-none"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -139,7 +139,7 @@ export default function Login() {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-400 text-sm">
               Hesabın yok mu? <Link to="/register" className="text-white font-bold hover:text-red-500 underline">Kaydol</Link>
             </p>
           </div>

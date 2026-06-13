@@ -17,6 +17,10 @@ class User(Base):
     # AVATAR VE İSİM (PERSISTENCE İÇİN)
     display_name = Column(String(100), nullable=True)
     avatar_url = Column(String(255), nullable=True)
+    
+    # ADMİN MANUEL PUAN/ROZET
+    manual_reputation = Column(Integer, nullable=True)
+    manual_badge = Column(String(50), nullable=True)
 
     # İlişkiler
     questions = relationship("Question", back_populates="owner")
@@ -26,6 +30,8 @@ class User(Base):
 
     @property
     def reputation(self):
+        if self.manual_reputation is not None:
+            return self.manual_reputation
         q_score = len(self.questions) * 2 if self.questions else 0
         a_score = len(self.answers) * 5 if self.answers else 0
         best_score = sum(15 for a in self.answers if getattr(a, 'is_best_answer', False)) if self.answers else 0
@@ -33,6 +39,8 @@ class User(Base):
 
     @property
     def badge(self):
+        if self.manual_badge is not None:
+            return self.manual_badge
         score = self.reputation
         if score < 10:
             return "Çaylak"

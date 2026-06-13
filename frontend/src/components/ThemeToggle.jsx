@@ -43,7 +43,7 @@ export default function ThemeToggle({ size = 'md', label = true }) {
         border transition-all duration-300 overflow-hidden select-none
         ${isLight
           ? 'bg-yellow-400/15 border-yellow-400/40 text-yellow-700 hover:bg-yellow-400/25'
-          : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+          : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-300'
         }
         ${isAnimating ? 'scale-95' : 'scale-100 hover:scale-105'}
         active:scale-95

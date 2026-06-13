@@ -683,7 +683,7 @@ export default function Dashboard() {
     else { displayContent = selectedDepartment === "Tümü" ? questions : questions.filter(q => q.owner?.department === selectedDepartment); }
 
     return (
-        <div className="min-h-screen bg-[#0a0f1d] text-slate-300 font-sans selection:bg-red-500/30 flex flex-col">
+        <div className="min-h-screen bg-[#0a0f1d] text-white font-sans selection:bg-red-500/30 flex flex-col">
             <Toaster position="top-center" containerStyle={{ top: 80, zIndex: 99999 }} toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '1rem' } }} />
             <nav className="sticky top-0 z-40 bg-[#0a0f1d]/80 backdrop-blur-xl border-b border-white/10 h-20 flex justify-between items-center px-6">
                 <div className="flex items-center gap-3 cursor-pointer group" onClick={handleGoHome}>
@@ -718,7 +718,7 @@ export default function Dashboard() {
                             <div className="absolute top-16 right-0 w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
 
                                 {/* --- GÜNCELLENEN BİLDİRİM BAŞLIĞI --- */}
-                                <div className="p-4 border-b border-white/5 bg-[#1a2035] flex justify-between items-center">
+                                <div className="p-4 border-b border-white/10 bg-[#1a2035] flex justify-between items-center">
                                     <h3 className="text-xs font-black text-white uppercase tracking-widest">Bildirimler</h3>
                                     {notifications.length > 0 && (
                                         <button
@@ -731,7 +731,7 @@ export default function Dashboard() {
                                 </div>
                                 <div className="max-h-96 overflow-y-auto custom-scrollbar">
                                     {notifications.length > 0 ? notifications.map(n => (
-                                        <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group flex gap-3">
+                                        <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-4 border-b border-white/10 hover:bg-white/5 transition-colors cursor-pointer group flex gap-3">
                                             <div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0">
                                                 <MessageSquare size={14} className="text-blue-400" />
                                             </div>
@@ -740,7 +740,7 @@ export default function Dashboard() {
                                                 <span className="text-[10px] text-slate-600 mt-1 block">{new Date(n.created_at).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
                                         </div>
-                                    )) : <div className="py-12 text-center text-xs text-slate-500 italic">Henüz bildirim yok.</div>}
+                                    )) : <div className="py-12 text-center text-xs text-slate-400 italic">Henüz bildirim yok.</div>}
                                 </div>
                             </div>
                         )}
@@ -756,7 +756,7 @@ export default function Dashboard() {
                     </button>
                     {isProfileOpen && (
                         <div className="absolute top-16 right-0 w-[90vw] max-w-xs md:w-80 bg-[#161b2c] border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in duration-200 overflow-hidden">
-                            <div className="bg-gradient-to-r from-red-900/50 to-red-600/50 p-6 flex flex-col items-center border-b border-white/5 relative">
+                            <div className="bg-gradient-to-r from-red-900/50 to-red-600/50 p-6 flex flex-col items-center border-b border-white/10 relative">
                                 <button
                                     onClick={() => setIsAvatarPickerOpen(true)}
                                     className="relative group h-16 w-16 mb-3 rounded-full"
@@ -781,8 +781,8 @@ export default function Dashboard() {
                                     </span>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-px bg-white/5 border-b border-white/5"><button onClick={() => { setViewMode('my_questions'); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myQuestions.length}</span><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Sorularım</span></button><button onClick={() => { setViewMode('my_answers'); fetchMyAnswers(); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myAnswers.length}</span><span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Cevaplarım</span></button></div>
-                            <div className="p-2 space-y-1"><button onClick={() => { setViewMode('favorites'); fetchMyFavorites(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><Heart size={16} className="text-red-400" /> Favorilerim <span className="ml-auto text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full">{myFavoriteQuestions.length}</span></button><button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group"><Settings size={16} className="text-blue-400" /> Profil Ayarları</button><button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><LogOut size={16} className="text-red-400" /> Çıkış Yap</button></div>
+                            <div className="grid grid-cols-2 gap-px bg-white/5 border-b border-white/10"><button onClick={() => { setViewMode('my_questions'); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myQuestions.length}</span><span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Sorularım</span></button><button onClick={() => { setViewMode('my_answers'); fetchMyAnswers(); setIsProfileOpen(false); }} className="p-4 text-center hover:bg-white/5 group"><span className="block text-xl font-black text-white group-hover:text-red-400">{myAnswers.length}</span><span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cevaplarım</span></button></div>
+                            <div className="p-2 space-y-1"><button onClick={() => { setViewMode('favorites'); fetchMyFavorites(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-white hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><Heart size={16} className="text-red-400" /> Favorilerim <span className="ml-auto text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full">{myFavoriteQuestions.length}</span></button><button onClick={() => { setIsSettingsOpen(true); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 p-3 text-slate-300 hover:bg-white/5 rounded-xl text-sm group"><Settings size={16} className="text-blue-400" /> Profil Ayarları</button><button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 text-white hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm group"><LogOut size={16} className="text-red-400" /> Çıkış Yap</button></div>
                         </div>
                     )}
                 </div>
@@ -955,7 +955,7 @@ export default function Dashboard() {
                                             </div>
                                             <div>
                                                 <p className="text-white font-bold text-sm">Dijital Çalışma Odaları</p>
-                                                <p className="text-slate-500 text-xs flex items-center gap-2">
+                                                <p className="text-slate-400 text-xs flex items-center gap-2">
                                                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />3 aktif oda</span>
                                                     <span>•</span>
                                                     <span className="flex items-center gap-1"><Timer size={10} className="text-purple-400" />28 kişi çalışıyor</span>
@@ -987,8 +987,8 @@ export default function Dashboard() {
                                         <div className="h-10 w-10 md:h-12 md:w-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg text-sm md:text-base">{getInitial(displayName)}</div>
                                     )}
                                     <div className="flex-1 space-y-2 md:space-y-3">
-                                        <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-base md:text-lg text-white placeholder:text-slate-500 focus:outline-none font-bold" />
-                                        <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-xs md:text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-16 md:h-24 transition-all"></textarea>
+                                        <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Aklına takılan sorunun başlığı..." className="w-full bg-transparent text-base md:text-lg text-white placeholder:text-slate-400 focus:outline-none font-bold" />
+                                        <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Detayları buraya yazabilirsin..." className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs md:text-sm text-slate-300 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-red-500/50 resize-none h-16 md:h-24 transition-all"></textarea>
                                         {imagePreview && (
                                             <div className="relative inline-block mt-2">
                                                 <img src={imagePreview} alt="Önizleme" className="h-16 md:h-20 w-auto rounded-xl border border-white/20 shadow-md" />
@@ -1059,13 +1059,13 @@ export default function Dashboard() {
                             {isLoading ? <Loader2 className="animate-spin mx-auto text-yellow-500 my-20" size={40} /> : leaderboardData.length > 0 ? (
                                 <div className="space-y-4">
                                     {leaderboardData.map((user, index) => (
-                                        <div key={user.id} className="bg-[#121723] border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-[#151b29] transition-all relative overflow-hidden group">
+                                        <div key={user.id} className="bg-[#121723] border border-white/10 rounded-2xl p-4 flex items-center gap-4 hover:bg-[#151b29] transition-all relative overflow-hidden group">
                                             {/* Rank Indicator */}
                                             <div className="flex-shrink-0 w-10 flex justify-center">
                                                 {index === 0 ? <Medal size={32} className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" /> :
                                                     index === 1 ? <Medal size={28} className="text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]" /> :
                                                         index === 2 ? <Medal size={28} className="text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]" /> :
-                                                            <span className="text-xl font-black text-slate-500 group-hover:text-slate-400">#{index + 1}</span>}
+                                                            <span className="text-xl font-black text-slate-400 group-hover:text-slate-400">#{index + 1}</span>}
                                             </div>
 
                                             {/* Avatar */}
@@ -1091,12 +1091,12 @@ export default function Dashboard() {
                                                     <Award size={14} className="text-yellow-500" />
                                                     <span className="text-sm font-black text-yellow-500">{user.reputation || 0} <span className="text-[10px] text-yellow-500/70 font-medium">Puan</span></span>
                                                 </div>
-                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.badge || "Çaylak"}</span>
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user.badge || "Çaylak"}</span>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                            ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Henüz kimse puan kazanmadı.</h3><p className="text-xs text-slate-500">İlk soruyu sor veya cevapla, liderliği sen kap!</p></div>}
+                            ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Henüz kimse puan kazanmadı.</h3><p className="text-xs text-slate-400">İlk soruyu sor veya cevapla, liderliği sen kap!</p></div>}
                         </div>
                     )}
 
@@ -1114,7 +1114,7 @@ export default function Dashboard() {
                             {isLoading ? <Loader2 className="animate-spin mx-auto text-red-500 my-20" size={40} /> : displayContent.length > 0 ? (
                                 displayContent.map(item => (
                                     viewMode === 'my_answers' ? (
-                                        <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
+                                        <div key={item.id} className="bg-[#121723] border border-white/10 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] group">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
                                                     <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-lg border border-red-500/20 font-bold uppercase tracking-wider">Cevapladığın Soru</span>
@@ -1122,18 +1122,18 @@ export default function Dashboard() {
                                                 </div>
                                                 <span className="text-[10px] text-slate-600 whitespace-nowrap ml-4">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                             </div>
-                                            <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative shadow-inner">
-                                                <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/5 transform rotate-45"></div>
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/10 relative shadow-inner">
+                                                <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#0d1117] border-l border-t border-white/10 transform rotate-45"></div>
                                                 <p className="text-slate-300 italic text-sm">"{item.content}"</p>
                                             </div>
-                                            <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
+                                            <div className="mt-4 pt-4 border-t border-white/10 flex justify-end">
                                                 <button onClick={() => openQuestionModal(item.question)} className="text-xs text-red-400 font-bold hover:text-white transition-colors flex items-center gap-1">Soruya Git <ExternalLink size={12} /></button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div key={item.id} className="bg-[#121723] border border-white/5 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group relative">
+                                        <div key={item.id} className="bg-[#121723] border border-white/10 rounded-3xl p-6 transition-all hover:border-white/10 hover:bg-[#151b29] hover:shadow-xl group relative">
                                             {userProfile?.email === item.owner?.email && (
-                                                <button onClick={(e) => handleDeleteQuestion(item.id, e)} className="absolute top-4 right-4 p-2 rounded-full bg-[#1a1f2e] text-slate-500 hover:bg-red-500 hover:text-white border border-white/5 hover:border-red-500 transition-all z-20 shadow-lg" title="Soruyu Sil">
+                                                <button onClick={(e) => handleDeleteQuestion(item.id, e)} className="absolute top-4 right-4 p-2 rounded-full bg-[#1a1f2e] text-slate-400 hover:bg-red-500 hover:text-white border border-white/10 hover:border-red-500 transition-all z-20 shadow-lg" title="Soruyu Sil">
                                                     {isDeletingQuestion === item.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                                 </button>
                                             )}
@@ -1148,12 +1148,12 @@ export default function Dashboard() {
                                                             selectedAvatarUrl ? <img src={selectedAvatarUrl} alt="Profil Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(displayName)
                                                         ) : (item.owner?.avatar_url ? <img src={item.owner.avatar_url} alt="Avatar" className="h-full w-full object-cover bg-white" /> : getInitial(item.owner?.display_name || item.owner?.email || "?"))}
                                                     </div>
-                                                    <div className="min-w-0"><h3 className={`text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:text-red-400 transition-colors' : ''}`} onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}>{item.owner?.email === userProfile?.email ? displayName : (item.owner ? (item.owner.display_name || item.owner.email.split('@')[0]) : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
+                                                    <div className="min-w-0"><h3 className={`text-white font-bold text-sm leading-none flex items-center gap-2 flex-wrap ${item.owner?.email !== userProfile?.email ? 'cursor-pointer hover:text-red-400 transition-colors' : ''}`} onClick={(e) => item.owner?.email !== userProfile?.email && openUserProfile(item.owner_id, e)}>{item.owner?.email === userProfile?.email ? displayName : (item.owner ? (item.owner.display_name || item.owner.email.split('@')[0]) : "Anonim")}{item.owner?.email === userProfile?.email && <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/10">Sen</span>}</h3><p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1 flex items-center gap-1"><GraduationCap size={10} /><span className="truncate max-w-[150px]">{item.owner?.department || "Genel"}</span></p></div>
                                                 </div>
                                                 <span className="text-[10px] text-slate-600 font-medium bg-white/5 px-2 py-1 rounded-lg mr-10">{new Date(item.created_at).toLocaleDateString("tr-TR")}</span>
                                             </div>
                                             <h4 className="text-lg font-bold text-slate-100 mb-2 group-hover:text-red-400 transition-colors cursor-pointer pr-10" onClick={() => openQuestionModal(item)}>{item.title}</h4>
-                                            <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/5 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
+                                            <p className="text-slate-400 text-sm leading-relaxed mb-6 italic border-l-2 border-white/10 pl-4 ml-1 cursor-pointer line-clamp-3" onClick={() => openQuestionModal(item)}>"{item.content}"</p>
                                             {item.image_url && (
                                                 <div className="relative mb-6 rounded-xl overflow-hidden border border-white/10 bg-black/20 flex justify-center group/img cursor-pointer shadow-inner" onClick={(e) => { e.stopPropagation(); setFullScreenImage(item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`); }}>
                                                     <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt="Soru" className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500" />
@@ -1162,17 +1162,17 @@ export default function Dashboard() {
                                                     </div>
                                                 </div>
                                             )}
-                                            <div className="pt-4 border-t border-white/5 flex justify-between items-center text-slate-500">
+                                            <div className="pt-4 border-t border-white/10 flex justify-between items-center text-slate-400">
                                                 <div className="flex gap-2">
                                                     <button onClick={() => openQuestionModal(item)} className="text-xs font-bold hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
                                                         <MessageCircle size={14} className="text-blue-400" />
                                                         <span>{item.answer_count || 0}</span>
                                                     </button>
-                                                    <button onClick={(e) => handleToggleFavorite(item.id, e)} className={`text-xs font-bold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg ${favoritedIds.has(item.id) ? 'text-red-500 bg-red-500/10' : 'text-slate-500 bg-white/5 hover:text-red-400 hover:bg-red-500/10'}`} title="Favorilere Ekle">
+                                                    <button onClick={(e) => handleToggleFavorite(item.id, e)} className={`text-xs font-bold transition-all flex items-center gap-2 px-3 py-1.5 rounded-lg ${favoritedIds.has(item.id) ? 'text-red-500 bg-red-500/10' : 'text-slate-400 bg-white/5 hover:text-red-400 hover:bg-red-500/10'}`} title="Favorilere Ekle">
                                                         <Heart size={14} fill={favoritedIds.has(item.id) ? 'currentColor' : 'none'} />
                                                         <span>{item.favorite_count !== undefined ? (item.favorite_count + (favoritedIds.has(item.id) && !item.is_favorited ? 1 : (!favoritedIds.has(item.id) && item.is_favorited ? -1 : 0))) : 0}</span>
                                                     </button>
-                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 text-slate-500 text-xs font-bold" title="Görüntülenme">
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 text-slate-400 text-xs font-bold" title="Görüntülenme">
                                                         <Eye size={14} className="text-blue-400/50" />
                                                         <span>{item.view_count || 0}</span>
                                                     </div>
@@ -1182,7 +1182,7 @@ export default function Dashboard() {
                                         </div>
                                     )
                                 ))
-                            ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center shadow-inner"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-500">Henüz soru veya cevap yok.</p></div>}
+                            ) : <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center shadow-inner"><Info size={32} className="mb-4 text-slate-700 opacity-50" /><h3 className="text-md font-bold text-white mb-1 italic text-slate-400">Sonuç bulunamadı.</h3><p className="text-[10px] text-slate-400">Henüz soru veya cevap yok.</p></div>}
                         </div>
                     )}
                 </main>

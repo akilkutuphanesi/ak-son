@@ -110,7 +110,7 @@ export default function Welcome() {
         {/* ✅ FIX: grid-cols-1 sm:grid-cols-3, padding küçültüldü ve tam olarak taşma kontrol altına alındı */}
         <div className="mt-16 md:mt-24 grid grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto gap-4 md:gap-6 w-full relative z-10">
           
-          <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3 hover:bg-[#121826]/80 overflow-hidden">
+          <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3 hover:bg-[#161b2c]/80 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="w-14 h-14 md:w-16 md:h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 mb-5 md:mb-6 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300 group-hover:bg-blue-500/20 shadow-lg">
               <MessageCircle size={28} />
@@ -119,7 +119,7 @@ export default function Welcome() {
             <p className="text-xs md:text-sm text-slate-400 font-medium relative z-10">Kendi bölümündeki öğrencilerin sorduğu soruları gör ve onlara yardım et.</p>
           </div>
 
-          <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3 hover:bg-[#121826]/80 overflow-hidden">
+          <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3 hover:bg-[#161b2c]/80 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="w-14 h-14 md:w-16 md:h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-400 mb-5 md:mb-6 border border-amber-500/20 group-hover:scale-110 transition-transform duration-300 group-hover:bg-amber-500/20 shadow-lg">
               <Users size={28} />

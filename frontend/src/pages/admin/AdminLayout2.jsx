@@ -27,7 +27,7 @@
  *   </Route>
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, BarChart, Settings, Search,
@@ -41,29 +41,25 @@ export default function AdminLayout2() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const globalSearchData = [
-    { type: 'user',         title: 'Ahmet Yılmaz',                  desc: '2024101 - Bilgisayar Müh.',   path: `${BASE}/users` },
-    { type: 'user',         title: 'Zeynep Kaya',                   desc: '2024102 - Yazılım Müh.',      path: `${BASE}/users` },
-    { type: 'content',      title: 'Java OOP Konusunda Takıldım',   desc: 'Soru - Yazar: Ahmet Y.',      path: `${BASE}/content` },
-    { type: 'announcement', title: '🎓 Dönem Sonu Sınav Takvimi',   desc: 'Duyuru - Yayında',            path: `${BASE}/announcements` },
-    { type: 'setting',      title: 'Bakım Modu',                    desc: 'Sistem Ayarları',              path: `${BASE}/settings` },
-    { type: 'department',   title: 'Bilgisayar Mühendisliği',       desc: 'CS - 420 öğrenci',            path: `${BASE}/departments` },
-  ];
+  const globalSearchData = [];
 
   const filteredSearch = globalSearchData.filter(item =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.desc.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, content: 'Sistem yedeği başarıyla alındı.', created_at: new Date(Date.now() - 600000).toISOString(), read: false },
-    { id: 2, content: 'Yeni kullanıcı sisteme kayıt oldu.', created_at: new Date(Date.now() - 3600000).toISOString(), read: false },
-    { id: 3, content: '"Sınav Soruları" içeriğine yeni şikayet geldi.', created_at: new Date(Date.now() - 7200000).toISOString(), read: false },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

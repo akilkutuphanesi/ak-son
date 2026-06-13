@@ -179,7 +179,7 @@ export default function SmartQuestionForm({ onSubmit, displayName = 'Sen', avata
           }
           <div className="flex-1">
             <p className="text-white font-bold text-sm">{displayName}</p>
-            <p className="text-slate-500 text-[10px]">Yeni soru paylaşıyor</p>
+            <p className="text-slate-400 text-[10px]">Yeni soru paylaşıyor</p>
           </div>
           {/* Canlı kart tipi rozeti */}
           <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border transition-all duration-300 ${cfg.bg} ${cfg.color} ${cfg.border}`}>
@@ -207,7 +207,7 @@ export default function SmartQuestionForm({ onSubmit, displayName = 'Sen', avata
             <FlaskConical size={10} /> Formül
           </button>
           <button onClick={() => setShowPalette(p => !p)}
-            className={`flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1.5 rounded-lg border transition-all ${showPalette ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-slate-500 bg-white/5 border-white/10 hover:bg-white/10'}`}>
+            className={`flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1.5 rounded-lg border transition-all ${showPalette ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-slate-400 bg-white/5 border-white/10 hover:bg-white/10'}`}>
             ∑ π ∫ {showPalette ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
           </button>
           <button onClick={() => fileRef.current.click()}
@@ -241,7 +241,7 @@ export default function SmartQuestionForm({ onSubmit, displayName = 'Sen', avata
             'Sorunun detaylarını buraya yazabilirsin...'
           }
           rows={4}
-          className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none transition-all font-mono"
+          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none transition-all font-mono"
         />
 
         {/* Görsel önizleme */}
@@ -255,9 +255,9 @@ export default function SmartQuestionForm({ onSubmit, displayName = 'Sen', avata
         )}
 
         {/* Alt çubuk */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
           <button onClick={() => setShowPreview(p => !p)}
-            className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 hover:text-slate-300 transition-colors">
+            className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-slate-300 transition-colors">
             {showPreview ? <EyeOff size={12} /> : <Eye size={12} />}
             {showPreview ? 'Önizlemeyi Gizle' : 'Canlı Önizleme'}
           </button>
@@ -276,7 +276,7 @@ export default function SmartQuestionForm({ onSubmit, displayName = 'Sen', avata
 
       {/* Canlı Önizleme */}
       {showPreview && (title || content || imagePreview) && (
-        <div className="border-t border-white/5 px-5 pb-5">
+        <div className="border-t border-white/10 px-5 pb-5">
           <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 mt-3 flex items-center gap-1.5">
             <Eye size={9} /> Kart Önizlemesi
           </p>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, FileText, BarChart, Settings, Search, Bell, LogOut, User as UserIcon, CheckCircle2, BellOff, ChevronDown, CheckCheck, ShieldAlert, BookOpen } from 'lucide-react';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -6,6 +6,13 @@ import ThemeToggle from '../../components/ThemeToggle';
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   // Menü Stateleri
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -15,15 +22,7 @@ export default function AdminLayout() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Arama yapılacak global veritabanı simülasyonu
-  const globalSearchData = [
-    { type: 'user', title: 'Ahmet Yılmaz', desc: '2024101 - Bilgisayar Müh.', path: '/admin/users' },
-    { type: 'user', title: 'Zeynep Kaya', desc: '2024102 - Yazılım Müh.', path: '/admin/users' },
-    { type: 'user', title: 'Caner Uysal', desc: '2024103 - Makine Müh.', path: '/admin/users' },
-    { type: 'content', title: 'Java OOP Konusunda Takıldım', desc: 'Soru - Yazar: Ahmet Y.', path: '/admin/content' },
-    { type: 'content', title: 'Sınav soruları sızdırıldı', desc: 'Şikayetli İçerik!', path: '/admin/content' },
-    { type: 'setting', title: 'Bakım Modu', desc: 'Sistem Ayarları', path: '/admin/settings' },
-    { type: 'setting', title: 'Otomatik Şikayet Banı', desc: 'Sistem Ayarları', path: '/admin/settings' },
-  ];
+  const globalSearchData = [];
 
   // Arama metnine göre filtreleme
   const filteredSearch = globalSearchData.filter(item => 
@@ -32,10 +31,7 @@ export default function AdminLayout() {
   );
 
   // --- BİLDİRİM STATE'LERİ ---
-  const [notifications, setNotifications] = useState([
-    { id: 1, content: "Sistem yedeği başarıyla alındı.", created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(), read: false },
-    { id: 2, content: "Yeni kullanıcı sisteme kayıt oldu.", created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(), read: false }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

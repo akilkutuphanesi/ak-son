@@ -33,18 +33,18 @@ export default function SettingsModal({
 
                 <div className="p-8 space-y-6">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Görünen İsim</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Görünen İsim</label>
                         <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-red-500 transition-colors" />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Bölüm</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Bölüm</label>
                         <div className="w-full bg-[#0a0f1d] border border-white/10 rounded-xl p-4 text-slate-400 cursor-not-allowed flex items-center justify-between shadow-inner">
                             {userProfile?.department}<Info size={16} />
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5">
+                    <div className="pt-4 border-t border-white/10">
                         <button
                             type="button"
                             onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
@@ -88,7 +88,7 @@ export default function SettingsModal({
                         )}
                     </div>
 
-                    <div className="pt-6 mt-4 border-t border-white/5">
+                    <div className="pt-6 mt-4 border-t border-white/10">
                         <button 
                             type="button"
                             onClick={handleDeleteAccount}
