@@ -38,9 +38,6 @@ export default function Welcome() {
             <h1 className="text-lg md:text-2xl font-black tracking-tight text-white leading-none drop-shadow-lg truncate">
                 Akıl <span className="text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">Kütüphanesi</span>
             </h1>
-            <p className="text-[9px] md:text-[10px] font-bold text-red-200/60 uppercase tracking-widest mt-1 hidden sm:block">
-                İskenderun Teknik Üniversitesi
-            </p>
           </div>
         </div>
 
@@ -93,7 +90,7 @@ export default function Welcome() {
         {/* Alt Metin */}
         {/* ✅ FIX: Mobilde text-sm, geniş ekranda text-lg */}
         <p className="max-w-2xl text-sm md:text-lg text-slate-400 mb-8 md:mb-12 leading-relaxed font-medium px-2">
-          Masandaki QR kodu okut, İSTE kütüphanesindeki diğer öğrencilerle anında soru-cevap yap. 
+          Kütüphanedeki diğer öğrencilerle anında soru-cevap yap. 
           Çözümü bul, masanı paylaş, akran eğitiminin gücünü keşfet!
         </p>
         
@@ -111,17 +108,8 @@ export default function Welcome() {
 
         {/* Alt Özellikler (Cam Kartlar) */}
         {/* ✅ FIX: grid-cols-1 sm:grid-cols-3, padding küçültüldü ve tam olarak taşma kontrol altına alındı */}
-        <div className="mt-16 md:mt-24 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full relative z-10">
+        <div className="mt-16 md:mt-24 grid grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto gap-4 md:gap-6 w-full relative z-10">
           
-          <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3 hover:bg-[#121826]/80 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="w-14 h-14 md:w-16 md:h-16 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-400 mb-5 md:mb-6 border border-red-500/20 group-hover:scale-110 transition-transform duration-300 group-hover:bg-red-500/20 shadow-lg">
-              <ScanLine size={28} />
-            </div>
-            <h3 className="text-white font-bold text-lg md:text-xl mb-2 md:mb-3 tracking-tight relative z-10">QR ile Bağlan</h3>
-            <p className="text-xs md:text-sm text-slate-400 font-medium relative z-10">Masandaki kodu okut, hangi masada olduğunu sisteme anında bildir.</p>
-          </div>
-
           <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-[2rem] flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3 hover:bg-[#121826]/80 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="w-14 h-14 md:w-16 md:h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 mb-5 md:mb-6 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300 group-hover:bg-blue-500/20 shadow-lg">
@@ -189,7 +177,7 @@ export default function Welcome() {
         </div>
 
         <p className="text-slate-600 text-[10px] font-bold tracking-[0.4em] uppercase">
-            İSTE &copy; 2026
+            AKIL KÜTÜPHANESİ &copy; 2026
         </p>
       </div>
     </div>

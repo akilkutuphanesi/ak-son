@@ -90,11 +90,10 @@ export default function Register() {
           <div className="relative z-10 space-y-8 md:space-y-10 text-left">
             <div className="space-y-2">
               <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-4 md:mb-6">
-                <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" />
+                <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="Logo" />
               </div>
               <div className="w-12 md:w-16 h-1.5 bg-red-500 rounded-full mb-4 md:mb-6"></div>
               <h2 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-none">Akıl <br /><span className="text-red-400">Kütüphanesİ</span></h2>
-              <p className="text-xs md:text-sm font-bold text-red-200/40 tracking-[0.2em] md:tracking-[0.3em] uppercase pt-2">İskenderun Teknİk Ünİversİtesİ</p>
             </div>
             <div className="w-full h-px bg-white/10"></div>
             <div className="space-y-3 md:space-y-4">
@@ -111,14 +110,9 @@ export default function Register() {
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">Yeni Hesap Oluştur</h2>
               <p className="text-slate-400 text-xs md:text-sm">Kütüphaneye giriş yapmak için bilgilerinizi girin.</p>
             </div>
-            {tableNumber ? (
+            {tableNumber && (
               <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
                 <span className="text-blue-400 font-bold text-[10px] md:text-[11px] uppercase tracking-widest">Masa #{tableNumber}</span>
-              </div>
-            ) : (
-              <div className="bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
-                <AlertTriangle className="text-amber-500" size={14} />
-                <span className="text-amber-500 font-bold text-[10px] uppercase">Masa QR Gerekli</span>
               </div>
             )}
           </div>
@@ -191,7 +185,7 @@ export default function Register() {
 
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
-              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="örnek@iste.edu.tr" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
+              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="örnek@universite.edu.tr" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
             </div>
 
             <div className="relative group">
@@ -236,7 +230,7 @@ export default function Register() {
           </div>
         </div>
       </div>
-      <div className="absolute bottom-6 text-slate-600 text-[10px] font-bold tracking-[0.4em] uppercase">İSTE &copy; 2026</div>
+      <div className="absolute bottom-6 text-slate-600 text-[10px] font-bold tracking-[0.4em] uppercase">AKIL KÜTÜPHANESİ &copy; 2026</div>
     </div>
   );
 }

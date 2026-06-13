@@ -75,12 +75,11 @@ export default function Login() {
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
           <div className="relative z-10 space-y-4 md:space-y-6 text-left">
             <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl w-fit backdrop-blur-sm border border-white/10 mb-3 md:mb-4">
-              <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="İSTE Logo" />
+              <img src="/logo.png" className="w-12 h-12 md:w-16 md:h-16 object-contain" alt="Logo" />
             </div>
             <div>
               <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] mb-3 md:mb-4">Akıl <br /> <span className="text-red-200">Kütüphanesi</span></h1>
               <div className="w-12 md:w-16 h-1.5 bg-red-400/40 rounded-full mb-3 md:mb-4"></div>
-              <p className="text-sm md:text-lg font-medium text-red-100/70 tracking-wide uppercase">İskenderun Teknik Üniversitesi</p>
             </div>
           </div>
         </div>
@@ -101,7 +100,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-500 transition-colors" size={18} />
-              <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Örn: isim.soyisim@iste.edu.tr veya admin" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
+              <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Örn: isim.soyisim@universite.edu.tr veya admin" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-5 text-white focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-all" required />
             </div>
 
             <div className="relative group">

@@ -687,13 +687,13 @@ export default function Dashboard() {
             <Toaster position="top-center" containerStyle={{ top: 80, zIndex: 99999 }} toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '1rem' } }} />
             <nav className="sticky top-0 z-40 bg-[#0a0f1d]/80 backdrop-blur-xl border-b border-white/10 h-20 flex justify-between items-center px-6">
                 <div className="flex items-center gap-3 cursor-pointer group" onClick={handleGoHome}>
-                    <img src="/logo.png" className="w-11 h-11 md:w-12 md:h-12 brightness-0 invert object-contain group-hover:scale-105 transition-transform" alt="İSTE Logo" />
+                    <img src="/logo.png" className="w-11 h-11 md:w-12 md:h-12 brightness-0 invert object-contain group-hover:scale-105 transition-transform" alt="Logo" />
                     <h1 className="text-2xl font-black text-white tracking-tighter hidden sm:block">Akıl <span className="text-red-500">Kütüphanesi</span></h1>
                 </div>
 
                 <div className="flex items-center gap-4 relative">
                     <div className="hidden md:flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full">
-                        <MapPin size={14} className="text-blue-400" /><span className="text-blue-400 font-bold text-[10px] uppercase tracking-widest">İSTE Kütüphane</span>
+                        <MapPin size={14} className="text-blue-400" /><span className="text-blue-400 font-bold text-[10px] uppercase tracking-widest">Kütüphane Ağı</span>
                     </div>
                     {/* ÇALIŞMA ODALARI HIZLI ERİŞİM */}
                     <Link to="/study-rooms"
